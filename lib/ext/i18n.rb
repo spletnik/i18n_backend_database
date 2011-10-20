@@ -1,8 +1,8 @@
 module I18n
+
   APP_DIRECTORY = 'app/views'
-
+  
   class << self
-
     def locale_segment
       I18n.locale.to_s == I18n.default_locale.to_s ? "" : "/#{I18n.locale}"
     end
@@ -63,6 +63,5 @@ module I18n
     def asset_path(asset)
       asset[0] == ?/ ? asset : "/images/#{asset}"
     end
-
   end
 end

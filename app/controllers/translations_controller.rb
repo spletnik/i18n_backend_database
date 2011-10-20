@@ -42,7 +42,7 @@ class TranslationsController < ActionController::Base
 
     @asset_translations  = I18n.asset_translations
     @untranslated_assets = I18n.untranslated_assets(@locale.code)
-    @percentage_translated =   (((@asset_translations.size - @untranslated_assets.size).to_f / @asset_translations.size.to_f * 100).round) rescue 0
+    @percentage_translated = (((@asset_translations.size - @untranslated_assets.size).to_f / @asset_translations.size.to_f * 100).round) rescue 0
 
     if @translation_option == TranslationOption.translated
       @asset_translations = @asset_translations.reject{|e| @untranslated_assets.include?(e)}
@@ -133,9 +133,8 @@ class TranslationsController < ActionController::Base
     end
   end
 
-  private
-
-    def find_locale
-      @locale = Locale.find_by_code(params[:locale_id])
-    end
+private
+  def find_locale
+    @locale = Locale.find_by_code(params[:locale_id])
+  end
 end

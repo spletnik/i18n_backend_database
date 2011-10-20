@@ -1,4 +1,3 @@
-
 module I18n
   module Backend
     class Database
@@ -201,7 +200,9 @@ module I18n
         # interpolation).
         def interpolate(locale, string, values = {})
           return string unless string.is_a?(String)
-
+          
+          string = string.dup # It returns an error if not duplicated
+          
           if string.respond_to?(:force_encoding)
             original_encoding = string.encoding
             string.force_encoding(Encoding::BINARY)
