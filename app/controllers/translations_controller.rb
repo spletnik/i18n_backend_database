@@ -1,5 +1,5 @@
 class TranslationsController < ActionController::Base
-  prepend_view_path(File.join(File.dirname(__FILE__), "..", "views"))
+
   layout 'translations'
   before_filter :find_locale
 
@@ -19,7 +19,7 @@ class TranslationsController < ActionController::Base
   # GET /translations
   # GET /translations.xml
   def translations
-    @locale ||= Locale.default_locale
+    @locale ||= I18n::Backend::Locale.default_locale
     @translation_option = TranslationOption.find(params[:translation_option])
 
     if @translation_option == TranslationOption.translated
@@ -37,7 +37,7 @@ class TranslationsController < ActionController::Base
   # GET /asset_translations
   # GET /asset_translations.xml
   def asset_translations
-    @locale ||= Locale.default_locale
+    @locale ||= I18n::Backend::Locale.default_locale
     @translation_option = TranslationOption.find(params[:translation_option])
 
     @asset_translations  = I18n.asset_translations
@@ -135,6 +135,6 @@ class TranslationsController < ActionController::Base
 
 private
   def find_locale
-    @locale = Locale.find_by_code(params[:locale_id])
+    @locale = I18n::Backend::Locale.find_by_code(params[:locale_id])
   end
 end

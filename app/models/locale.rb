@@ -56,7 +56,7 @@ module I18n::Backend
     end
 
     def default_locale?
-      self == Locale.default_locale
+      self == I18n::Backend::Locale.default_locale
     end
 
     def to_param
