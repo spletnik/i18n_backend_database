@@ -1,8 +1,8 @@
 module I18n::Backend
   class Database
     INTERPOLATION_RESERVED_KEYS = %w(scope default)
-    MATCH = /(\\\\)?\{\{([^\}]+)\}\}/
-
+    MATCH = /(\\\\)?%\{([^\}]+)\}/
+    
     attr_accessor :locale
     attr_accessor :cache_store
     attr_accessor :localize_text_tag
@@ -96,17 +96,27 @@ module I18n::Backend
     # Acts the same as +strftime+, but returns a localized version of the 
     # formatted date string. Takes a key from the date/time formats 
     # translations as a format argument (<em>e.g.</em>, <tt>:short</tt> in <tt>:'date.formats'</tt>).        
-    def localize(locale, object, format = :default)
+    def localize(locale, object, format = :default, options = {})
       raise ArgumentError, "Object must be a Date, DateTime or Time object. #{object.inspect} given." unless object.respond_to?(:strftime)
       
-      type = object.respond_to?(:sec) ? 'time' : 'date'
-      format = translate(locale, "#{type}.formats.#{format.to_s}") unless format.to_s.index('%') # lookup keyed formats unless a custom format is passed
-
-      format.gsub!(/%a/, translate(locale, :"date.abbr_day_names")[object.wday]) 
-      format.gsub!(/%A/, translate(locale, :"date.day_names")[object.wday])
-      format.gsub!(/%b/, translate(locale, :"date.abbr_month_names")[object.mon])
-      format.gsub!(/%B/, translate(locale, :"date.month_names")[object.mon])
-      format.gsub!(/%p/, translate(locale, :"time.#{object.hour < 12 ? :am : :pm}")) if object.respond_to? :hour
+      @locale = locale_in_context(locale)
+      
+      unless format.to_s.index('%') # Unless a custom format is passed
+        type = object.respond_to?(:sec) ? 'time' : 'date'
+        if lookup(@locale, "#{type}.formats.#{format.to_s}") # Translation is in the database
+          format = translate(locale, "#{type}.formats.#{format.to_s}") # lookup keyed formats
+        else # There is no localization translations on the database, loading the default ones
+          I18nUtil.load_default_localizations
+          locale = I18n::Backend::Locale.default_locale.code
+          format = translate(locale, "#{type}.formats.#{format.to_s}")
+        end
+      end
+      
+      format.gsub!(/%a/, translate(locale, "date.abbr_day_names")[object.wday]) 
+      format.gsub!(/%A/, translate(locale, "date.day_names")[object.wday])
+      format.gsub!(/%b/, translate(locale, "date.abbr_month_names")[object.mon])
+      format.gsub!(/%B/, translate(locale, "date.month_names")[object.mon])
+      format.gsub!(/%p/, translate(locale, "time.#{object.hour < 12 ? :am : :pm}")) if object.respond_to? :hour
       
       object.strftime(format)
     end
@@ -238,7 +248,7 @@ module I18n::Backend
 
       # Start building our return hash
       result = {}
-      record_array.each { |record|
+      record_array.each do |record|
         key = strip_root_key(root_key, record.raw_key)
         next unless key.present?
 
@@ -254,7 +264,7 @@ module I18n::Backend
           value = value.to_i if value == "0" || value.to_i != 0 #simple integer cast
           result[key.to_sym] = value
         end
-      }
+      end
       result
     end
   end

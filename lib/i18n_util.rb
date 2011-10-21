@@ -6,6 +6,10 @@ class I18nUtil
       I18n::Backend::Locale.create({:code => code, :name => y["name"]}) unless I18n::Backend::Locale.exists?(:code => code)
     end
   end
+  
+  def self.load_default_localizations
+    I18nUtil.load_from_yml File.join(File.dirname(__FILE__), "../data", "default_localized_translations.yml")
+  end
 
   # Create tanslation records from the YAML file.  Will create the required locales if they do not exist.
   def self.load_from_yml(file_name)
