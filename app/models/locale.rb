@@ -4,10 +4,10 @@ module I18n::Backend
     validates_uniqueness_of :code
 
     has_many :translations, :dependent => :destroy
-    named_scope :non_defaults, :conditions => ["code != ?", I18n.default_locale.to_s]
+    scope :non_defaults, :conditions => ["code != ?", I18n.default_locale.to_s]
 
-    #named_scope :english, lambda { |m| { return Hash.new if m.nil?; :conditions => "locales.locale = '#{m}'" } }
-  # named_scope :in_city, lambda { |m| { return {} if m.nil?; :joins => [cities], :conditions => "cities.name = '#{m}' } }
+    # scope :english, lambda { |m| { return Hash.new if m.nil?; :conditions => "locales.locale = '#{m}'" } }
+    # scope :in_city, lambda { |m| { return {} if m.nil?; :joins => [cities], :conditions => "cities.name = '#{m}' } }
     
     def self.default_locale
       @@default_locale ||= self.find(:first, :conditions => {:code => I18n.default_locale.to_s})
@@ -38,7 +38,7 @@ module I18n::Backend
     end
 
     def copy_from_default(key, pluralization_index)
-      if !self.default_locale? && Locale.default_locale.has_translation?(key, pluralization_index)
+      if !self.default_locale? && I18n::Backend::Locale.default_locale.has_translation?(key, pluralization_index)
         create_translation(key, key, pluralization_index)
       end
     end

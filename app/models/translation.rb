@@ -3,15 +3,15 @@ require 'digest/md5'
 class Translation < ActiveRecord::Base
   belongs_to :locale
   validates_presence_of :key
-  before_validation_on_create :generate_hash_key
-  after_update  :update_cache
+  before_validation :generate_hash_key, :on => :create
+  after_update :update_cache
 
-  named_scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
-  named_scope :translated,   :conditions => "value IS NOT NULL", :order => :raw_key
+  scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
+  scope :translated, :conditions => "value IS NOT NULL", :order => :raw_key
 
-  def default_locale_value(rescue_value='No default locale value')
+  def default_locale_value(rescue_value = 'No default locale value')
     begin
-      Locale.default_locale.translations.find_by_key_and_pluralization_index(self.key, self.pluralization_index).value
+      I18n::Backend::Locale.default_locale.translations.find_by_key_and_pluralization_index(self.key, self.pluralization_index).value
     rescue
       rescue_value
     end
@@ -33,14 +33,14 @@ class Translation < ActiveRecord::Base
     "#{locale.code}:#{key}"
   end
 
-  protected
-    def generate_hash_key
-      self.raw_key = key.to_s
-      self.key = Translation.hk(key)
-    end
+protected
+  def generate_hash_key
+    self.raw_key = key.to_s
+    self.key = Translation.hk(key)
+  end
 
-    def update_cache
-      new_cache_key = Translation.ck(self.locale, self.key, false)
-      I18n.backend.cache_store.write(new_cache_key, self.value)
-    end
+  def update_cache
+    new_cache_key = Translation.ck(self.locale, self.key, false)
+    I18n.backend.cache_store.write(new_cache_key, self.value)
+  end
 end

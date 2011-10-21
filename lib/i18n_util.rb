@@ -1,10 +1,17 @@
 class I18nUtil
+  def self.load_default_locales(path_to_file = nil)
+    path_to_file ||= File.join(File.dirname(__FILE__), "../data", "locales.yml")
+    data = YAML::load(IO.read(path_to_file))
+    data.each do |code, y|
+      I18n::Backend::Locale.create({:code => code, :name => y["name"]}) unless I18n::Backend::Locale.exists?(:code => code)
+    end
+  end
 
   # Create tanslation records from the YAML file.  Will create the required locales if they do not exist.
   def self.load_from_yml(file_name)
     data = YAML::load(IO.read(file_name))
     data.each do |code, translations| 
-      locale = Locale.find_or_create_by_code(code)
+      locale = I18n::Backend::Locale.find_or_create_by_code(code)
       backend = I18n::Backend::Simple.new
       keys = extract_i18n_keys(translations)
       keys.each do |key|
@@ -69,7 +76,7 @@ class I18nUtil
 
       puts "translating for #{object} with options #{options.inspect}" unless RAILS_ENV['test']        
       I18n.t(object, options) # default locale first
-      locales =  Locale.available_locales
+      locales = I18n::Backend::Locale.available_locales
       locales.delete(I18n.default_locale)
       # translate for other locales
       locales.each do |locale|
@@ -84,7 +91,7 @@ class I18nUtil
     Dir.glob("#{dir}/*").each do |item|
       if File.directory?(item)
         assets += translated_objects(item) unless item.ends_with?('i18n_backend_database') # ignore self
-      else
+      elsif item.ends_with?('.rb') || item.ends_with?('.js') || item.ends_with?('.erb')
         File.readlines(item).each do |l|
           assets += l.scan(/I18n.t\((.*?)\)/).flatten
         end
@@ -95,8 +102,8 @@ class I18nUtil
 
   # Populate translation records from the default locale to other locales if no record exists.
   def self.synchronize_translations
-    non_default_locales = Locale.non_defaults
-    Locale.default_locale.translations.each do |t|
+    non_default_locales = I18n::Backend::Locale.non_defaults
+    I18n::Backend::Locale.default_locale.translations.each do |t|
       non_default_locales.each do |locale|
         unless locale.translations.exists?(:key => t.key, :pluralization_index => t.pluralization_index)
           value = t.value =~ /^---(.*)\n/ ? t.value : nil # well will copy across YAML, like symbols
