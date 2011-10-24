@@ -1,4 +1,7 @@
 class I18nUtil
+
+  DEFAULT_TRANSLATION_PATH  = 'config/translations'
+  
   def self.load_default_locales(path_to_file = nil)
     path_to_file ||= File.join(File.dirname(__FILE__), "../data", "locales.yml")
     data = YAML::load(IO.read(path_to_file))
@@ -20,18 +23,12 @@ class I18nUtil
       keys = extract_i18n_keys(translations)
       keys.each do |key|
         value = backend.send(:lookup, code, key)
-
         pluralization_index = 1
-
-        if key.ends_with?('.one')
-          key.gsub!('.one', '')
-        end
-
+        key.gsub!('.one', '') if key.ends_with?('.one')
         if key.ends_with?('.other')
           key.gsub!('.other', '')
           pluralization_index = 0
         end
-
         if value.is_a?(Array)
           value.each_with_index do |v, index|
             create_translation(locale, "#{key}", index, v) unless v.nil?
@@ -39,7 +36,6 @@ class I18nUtil
         else
           create_translation(locale, key, pluralization_index, value)
         end
-
       end
     end
   end
@@ -155,5 +151,17 @@ class I18nUtil
   def self.needs_human_eyes?(value)
     return true if value.index('%')         # date formats
     return true if value =~ /^---(.*)\n/    # YAML
+  end
+  
+  def self.process_translation_locales(locales_codes, &action)
+    translation_path = Rails.root + DEFAULT_TRANSLATION_PATH
+    if locales_codes.empty?
+      puts "Nothing to do."
+    else
+      locales_codes.each do | locale_code |
+        raise "Locale '#{locale_code}' not found"  unless locale = Locale.find_by_code(locale_code)
+        action.call(locale, translation_path)
+      end
+    end
   end
 end
