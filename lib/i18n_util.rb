@@ -18,23 +18,25 @@ class I18nUtil
   def self.load_from_yml(file_name)
     data = YAML::load(IO.read(file_name))
     data.each do |code, translations| 
-      locale = I18n::Backend::Locale.find_or_create_by_code(code)
-      backend = I18n::Backend::Simple.new
-      keys = extract_i18n_keys(translations)
-      keys.each do |key|
-        value = backend.send(:lookup, code, key)
-        pluralization_index = 1
-        key.gsub!('.one', '') if key.ends_with?('.one')
-        if key.ends_with?('.other')
-          key.gsub!('.other', '')
-          pluralization_index = 0
-        end
-        if value.is_a?(Array)
-          value.each_with_index do |v, index|
-            create_translation(locale, "#{key}", index, v) unless v.nil?
+      locale = I18n::Backend::Locale.find_by_code(code)
+      if locale
+        backend = I18n::Backend::Simple.new
+        keys = extract_i18n_keys(translations)
+        keys.each do |key|
+          value = backend.send(:lookup, code, key)
+          pluralization_index = 1
+          key.gsub!('.one', '') if key.ends_with?('.one')
+          if key.ends_with?('.other')
+            key.gsub!('.other', '')
+            pluralization_index = 0
           end
-        else
-          create_translation(locale, key, pluralization_index, value)
+          if value.is_a?(Array)
+            value.each_with_index do |v, index|
+              create_translation(locale, "#{key}", index, v) unless v.nil?
+            end
+          else
+            create_translation(locale, key, pluralization_index, value)
+          end
         end
       end
     end
