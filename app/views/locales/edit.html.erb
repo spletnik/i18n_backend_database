@@ -1,20 +1,11 @@
 <h1>Editing locale</h1>
 
-<% form_for(@locale) do |f| %>
-  <%= f.error_messages %>
+<%= display_flash %>
 
-  <p>
-    <%= f.label :code %><br />
-    <%= f.text_field :code %>
-  </p>
-  <p>
-    <%= f.label :name %><br />
-    <%= f.text_field :name %>
-  </p>
-  <p>
-    <%= f.submit "Update" %>
-  </p>
+<% form_for(@locale, :url => locales_path(@locale), :method => :put) do |f| %>
+  <p><%= f.label :code, 'Code' %><%= f.text_field :code %></p>
+  <p><%= f.label :name, 'Name' %><%= f.text_field :name %></p>
+  <p><%= f.submit "Update" %></p>
 <% end %>
 
-<%= link_to 'Show', @locale %> |
-<%= link_to 'Back', locales_path %>
+<p><%= link_to 'Show', locale_path(@locale) %> | <%= link_to 'Back', locales_path %></p>

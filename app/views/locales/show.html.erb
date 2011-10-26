@@ -1,14 +1,9 @@
-<p>
-  <b>Code:</b>
-  <%=h @locale.code %>
-</p>
+<p><b>Code:</b><%= @locale.code %></p>
+
+<p><b>Name:</b><%= @locale.name %></p>
 
 <p>
-  <b>Name:</b>
-  <%=h @locale.name %>
+  <%= link_to 'Edit', edit_locale_path(@locale) %> | 
+  <%= link_to 'Translations', locale_translations_path(@locale) %> | 
+  <%= link_to 'Back', locales_path %>
 </p>
-
-
-<%= link_to 'Edit', edit_locale_path(@locale) %> |
-<%= link_to 'Translations', locale_translations_path(@locale) %> |
-<%= link_to 'Back', locales_path %>

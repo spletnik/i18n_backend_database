@@ -63,9 +63,4 @@ namespace :i18n do
       I18nUtil.google_translate
     end
   end
-  
-  desc "Sync extra files from blogify plugin"  
-  task :sync do  
-    system "rsync -ruv vendor/plugins/i18n_backend_database/public ."
-  end  
 end

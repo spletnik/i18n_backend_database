@@ -7,8 +7,7 @@
     <th>Value</th>
     <th>Default Locale Value</th>
   </tr>
-
-<% for translation in @translations %>
+  <% for translation in @translations %>
   <tr>
     <td><%=h translation.key %></td>
     <td><%=h translation.raw_key %></td>
@@ -16,12 +15,9 @@
     <td><%=h translation.default_locale_value %></td>
     <td><%= link_to 'Show', locale_translation_path(@locale, translation) %></td>
     <td><%= link_to 'Edit', edit_locale_translation_path(@locale, translation) %></td>
-    <td><%= link_to 'Destroy', locale_translation_path(@locale, translation), :confirm => 'Are you sure?', :method => :delete %></td>
+    <td><%= button_to 'Destroy', locale_translation_path(@locale, translation), :confirm => 'Are you sure?', :method => :delete %></td>
   </tr>
-<% end %>
+  <% end %>
 </table>
 
-<br />
-
-<%= link_to 'New translation', new_locale_translation_path %> |
-<%= link_to 'Back', locales_path %>
+<p><%= link_to 'New translation', new_locale_translation_path %> | <%= link_to 'Back', locales_path %></p>

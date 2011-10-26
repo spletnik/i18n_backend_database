@@ -5,7 +5,7 @@
   <%= submit_tag 'Go' %>
 <% end %>
 
-<p>Textual Translation progress: <span class="progressBar" id="translate_progress"><%= @locale.percentage_translated %></span></p>
+<p>Textual Translation progress: <strong><%= @locale.percentage_translated %>%</strong></p>
 
 <h2><%= @translation_option.description %>: <%= @locale.name %></h2>
 
