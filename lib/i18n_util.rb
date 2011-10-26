@@ -67,7 +67,8 @@ class I18nUtil
     end
   end
 
-  # Create translation records for all existing locales from translation calls with the application.  Ignores errors from tranlations that require objects.
+  # Create translation records for all existing locales from translation calls with the application. 
+  # Ignores errors from tranlations that require objects.
   def self.seed_application_translations(dir='app')
     translated_objects(dir).each do |object|
       interpolation_arguments= object.scan(/\{\{(.*?)\}\}/).flatten

@@ -9,7 +9,6 @@ class TranslationsController < ActionController::Base
   # GET /translations.xml
   def index
     @translations = @locale.translations.find(:all, :order => "raw_key, pluralization_index")
-
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @translations }
@@ -21,13 +20,11 @@ class TranslationsController < ActionController::Base
   def translations
     @locale ||= I18n::Backend::Locale.default_locale
     @translation_option = TranslationOption.find(params[:translation_option])
-
     if @translation_option == TranslationOption.translated
       @translations = @locale.translations.translated
     else
       @translations = @locale.translations.untranslated
     end
-
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @translations }
@@ -39,17 +36,14 @@ class TranslationsController < ActionController::Base
   def asset_translations
     @locale ||= I18n::Backend::Locale.default_locale
     @translation_option = TranslationOption.find(params[:translation_option])
-
     @asset_translations  = I18n.asset_translations
     @untranslated_assets = I18n.untranslated_assets(@locale.code)
     @percentage_translated = (((@asset_translations.size - @untranslated_assets.size).to_f / @asset_translations.size.to_f * 100).round) rescue 0
-
     if @translation_option == TranslationOption.translated
       @asset_translations = @asset_translations.reject{|e| @untranslated_assets.include?(e)}
     else
       @asset_translations = @untranslated_assets
     end
-
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @untranslated_assets }
@@ -60,7 +54,6 @@ class TranslationsController < ActionController::Base
   # GET /translations/1.xml
   def show
     @translation = @locale.translations.find(params[:id])
-
     respond_to do |format|
       format.html # show.html.erb
       format.xml  { render :xml => @translation }
@@ -71,7 +64,6 @@ class TranslationsController < ActionController::Base
   # GET /translations/new.xml
   def new
     @translation = Translation.new
-
     respond_to do |format|
       format.html # new.html.erb
       format.xml  { render :xml => @translation }
@@ -105,7 +97,6 @@ class TranslationsController < ActionController::Base
   def update
     @translation  = @locale.translations.find(params[:id])
     @first_time_translating = @translation.value.nil?
-
     respond_to do |format|
       if @translation.update_attributes(params[:translation])
         format.html do

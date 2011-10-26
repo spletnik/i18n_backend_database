@@ -22,9 +22,17 @@ namespace :i18n do
     I18nUtil.process_translation_locales(ENV['locale'].split(',')) do |locale, translation_path|
       translation_file = translation_path + "#{locale.code}.yml"
       raise "No translation file exists for '#{locale.code}' at #{translation_file}" unless File.exist?(translation_file)
-      puts "Import #{translations.length} translations for '#{locale.code}'..."
-      Translation.delete_all(:locale_id => locale.id)
-      I18nUtil.load_from_yml(translation_file)
+      raise "No translations found for '#{locale.code}'" unless (translations = YAML::load_file(translation_file))
+      puts "Importing #{translations.length} translations for '#{locale.code}'..."
+      I18n::Backend::Translation.delete_all(:locale_id => locale.id)
+      translations.each do |translation| 
+        I18n::Backend::Translation.create!(
+          :key => translation['key'], 
+          :value => translation['value'], 
+          :pluralization_index => translation['pluralization_index'], 
+          :locale_id => locale.id
+        )
+      end
     end
   end
   
