@@ -24,9 +24,9 @@ namespace :i18n do
       raise "No translation file exists for '#{locale.code}' at #{translation_file}" unless File.exist?(translation_file)
       raise "No translations found for '#{locale.code}'" unless (translations = YAML::load_file(translation_file))
       puts "Importing #{translations.length} translations for '#{locale.code}'..."
-      I18n::Backend::Translation.delete_all(:locale_id => locale.id)
+      Translation.delete_all(:locale_id => locale.id)
       translations.each do |translation| 
-        I18n::Backend::Translation.create!(
+        Translation.create!(
           :key => translation['key'], 
           :value => translation['value'], 
           :pluralization_index => translation['pluralization_index'], 
