@@ -29,7 +29,7 @@ module I18n::Backend
       translation = self.translations.create(conditions)
 
       # hackity hack.  bug #922 maybe?
-      self.connection.commit_db_transaction unless RAILS_ENV['test']
+      self.connection.commit_db_transaction unless Rails.env.test?
       translation
     end
 

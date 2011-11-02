@@ -32,7 +32,7 @@ module I18n::Backend
     # locale, we'll create a translation record with a nil value.  This
     # allows for the lookup of untranslated records in a given locale.
     def translate(locale, key, options = {})
-      @locale = locale_in_context(locale)
+      locale_in_context(locale)
 
       options[:scope] = [options[:scope]] unless options[:scope].is_a?(Array) || options[:scope].blank?
       key = "#{options[:scope].join('.')}.#{key}".to_sym if options[:scope] && key.is_a?(Symbol)
@@ -99,7 +99,7 @@ module I18n::Backend
     def localize(locale, object, format = :default, options = {})
       raise ArgumentError, "Object must be a Date, DateTime or Time object. #{object.inspect} given." unless object.respond_to?(:strftime)
       
-      @locale = locale_in_context(locale)
+      locale_in_context(locale)
       
       unless format.to_s.index('%') # Unless a custom format is passed
         type = object.respond_to?(:sec) ? 'time' : 'date'
@@ -142,17 +142,6 @@ module I18n::Backend
       # let's not do anything yet
     end
 
-  protected
-    # keep a local copy of the locale in context for use within the translation
-    # routine, and also accept an arbitrary locale for one time locale lookups
-    def locale_in_context(locale)
-      return @locale if @locale && @locale.code == locale.to_s
-      #Locale.find_by_code(locale.to_s) rescue nil && (raise InvalidLocale.new(locale))
-      locale = I18n::Backend::Locale.find_by_code(locale.to_s)
-      raise I18n::InvalidLocale.new(locale) unless locale
-      locale
-    end
-
     # lookup key in cache and db, if the db is hit the value is cached
     def lookup(locale, key)
       cache_key = Translation.ck(locale, key)
@@ -171,10 +160,19 @@ module I18n::Backend
             values
           end
         end
-
         @cache_store.write(cache_key, (value.nil? ? nil : value))
         return value
       end
+    end
+    
+  protected
+    # keep a local copy of the locale in context for use within the translation
+    # routine, and also accept an arbitrary locale for one time locale lookups
+    def locale_in_context(locale)
+      return @locale if @locale && @locale.code == locale.to_s
+      return @locale unless locale.class == String || locale.class == Symbol
+      @locale = I18n::Backend::Locale.find_by_code(locale.to_s)
+      raise I18n::InvalidLocale.new(locale) unless @locale
     end
 
     # looks up translations for the default locale, and if they exist untranslated records are created for the locale and the default locale values are returned 
@@ -219,7 +217,6 @@ module I18n::Backend
 
       result = string.gsub(MATCH) do
         escaped, pattern, key = $1, $2, $2.to_sym
-
         if escaped
           pattern
         elsif INTERPOLATION_RESERVED_KEYS.include?(pattern)

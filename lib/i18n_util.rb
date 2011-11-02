@@ -19,24 +19,21 @@ class I18nUtil
     data = YAML::load(IO.read(file_name))
     data.each do |code, translations| 
       locale = I18n::Backend::Locale.find_by_code(code)
-      if locale
-        backend = I18n::Backend::Simple.new
-        keys = extract_i18n_keys(translations)
-        keys.each do |key|
-          value = backend.send(:lookup, code, key)
-          pluralization_index = 1
-          key.gsub!('.one', '') if key.ends_with?('.one')
-          if key.ends_with?('.other')
-            key.gsub!('.other', '')
-            pluralization_index = 0
+      raise "Locale not found: #{code}" unless locale
+      translations_array = extract_translations_from_hash(translations)
+      translations_array.each do |key, value|
+        pluralization_index = 1
+        key.gsub!('.one', '') if key.ends_with?('.one')
+        if key.ends_with?('.other')
+          key.gsub!('.other', '')
+          pluralization_index = 0
+        end
+        if value.is_a?(Array)
+          value.each_with_index do |v, index|
+            create_translation(locale, key, index, v) unless v.nil?
           end
-          if value.is_a?(Array)
-            value.each_with_index do |v, index|
-              create_translation(locale, "#{key}", index, v) unless v.nil?
-            end
-          else
-            create_translation(locale, key, pluralization_index, value)
-          end
+        else
+          create_translation(locale, key, pluralization_index, value)
         end
       end
     end
@@ -46,22 +43,22 @@ class I18nUtil
   def self.create_translation(locale, key, pluralization_index, value)
     translation = locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) # find existing record by hash key
     unless translation # or build new one with raw key
-      translation = locale.translations.build(:key =>key, :pluralization_index => pluralization_index)
-      puts "from yaml create translation for #{locale.code} : #{key} : #{pluralization_index}" unless RAILS_ENV['test']
+      translation = locale.translations.build(:key => key, :pluralization_index => pluralization_index)
+      puts "from yaml create translation for #{locale.code} : #{key} : #{pluralization_index}" unless Rails.env.test?
     end
     translation.value = value
     translation.save!
   end
 
-  def self.extract_i18n_keys(hash, parent_keys = [])
+  def self.extract_translations_from_hash(hash, parent_keys = [])
     hash.inject([]) do |keys, (key, value)|
       full_key = parent_keys + [key]
       if value.is_a?(Hash)
         # Nested hash
-        keys += extract_i18n_keys(value, full_key)
+        keys += extract_translations_from_hash(value, full_key)
       elsif !value.nil?
         # String leaf node
-        keys << full_key.join(".")
+        keys << [full_key.join("."), value]
       end
       keys
     end
