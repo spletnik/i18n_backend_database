@@ -10,37 +10,27 @@ h2. Installation
 
 <pre>
   <code>
-    script/generate i18n_backend_database             # add migration
-    rake db:migrate                                   # migrate
+  script/generate i18n_backend_database             # add migration
+  rake db:migrate                                   # migrate
 
-    rake i18n:populate:load_default_locales           # populate default locales
-    rake i18n:populate:from_rails                     # populate the locales and translations tables from all Rails Locale YAML files.
-    rake i18n:populate:from_application               # populate the translation tables from translation calls within the application.
-    rake i18n:populate:synchronize_translations       # create non-default locale translation records from default locale translations.
-    rake i18n:populate:all                            # run all populate tasks.
-    rake i18n:translate:google                        # translate all untranslated string values using Google Language Translation API.
-    
-    rake i18n:import_translations locale=<locale>     # Import the translations from the translations/<locale>.yml
-    rake i18n:export_translations                     # Exports all the database translations to the translations/ folder
+  rake i18n:populate:load_default_locales           # populate default locales
+  rake i18n:populate:from_rails                     # populate the locales and translations tables from all Rails Locale YAML files.
+  rake i18n:populate:from_application               # populate the translation tables from translation calls within the application.
+  rake i18n:populate:synchronize_translations       # create non-default locale translation records from default locale translations.
+  rake i18n:populate:all                            # run all populate tasks.
+  rake i18n:translate:google                        # translate all untranslated string values using Google Language Translation API.
+  
+  rake i18n:import_translations locale=<locale>     # Import the translations from the translations/<locale>.yml
+  rake i18n:export_translations                     # Exports all the database translations to the translations/ folder
   </code>
 </pre>
-
 
 In config/initialisers/i18n.rb
 
 <pre>
   <code>
-    I18n.backend = I18n::Backend::Database.new # registers the backend
     I18n.backend.cache_store = :memory_store   # optional: specify an alternate cache store
     I18n.backend.localize_text_tag = '##'      # optional: specify an alternate localize text tag, the default is ^^
-  </code>
-</pre>
-
-In config/routes.rb to register admin panel routes
-
-<pre>
-  <code>
-    map.from_plugin 'i18n_backend_database'
   </code>
 </pre>
 
@@ -75,8 +65,8 @@ Links to external documents that need to be translated should be tagged as well.
 <pre>
   <code>
     t('http://www.elctech.com/core')
-    </code>
-  </pre>
+  </code>
+</pre>
 
 All fragment cache view blocks need to have their keys prepended with the current locale.
 <pre>
