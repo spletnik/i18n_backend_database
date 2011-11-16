@@ -19,6 +19,7 @@ namespace :i18n do
   desc 'Load translation data from fixtures into database for a locale'
   task :import_translations => :environment do
     raise "Required argument: locale" unless ENV['locale']
+    Rake::Task["i18n:clear_cache"].invoke
     I18nUtil.process_translation_locales(ENV['locale'].split(',')) do |locale, translation_path|
       translation_file = translation_path + "#{locale.code}.yml"
       raise "No translation file exists for '#{locale.code}' at #{translation_file}" unless File.exist?(translation_file)
