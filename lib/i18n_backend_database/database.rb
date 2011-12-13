@@ -22,6 +22,11 @@ module I18n::Backend
       @cache_store = ActiveSupport::Cache.lookup_store(store)
     end
 
+    # TODO RAILS3 not sure what this method should do or how it should act yet
+    def transliterate *args
+      args[1]
+    end
+
     # Handles the lookup and addition of translations to the database
     #
     # On an initial translation, the locale is checked to determine if
