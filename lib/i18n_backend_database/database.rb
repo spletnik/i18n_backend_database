@@ -2,7 +2,7 @@ module I18n::Backend
   class Database
     INTERPOLATION_RESERVED_KEYS = %w(scope default)
     MATCH = /(\\\\)?%\{([^\}]+)\}/
-    
+
     attr_accessor :locale
     attr_accessor :cache_store
     attr_accessor :localize_text_tag
@@ -62,7 +62,7 @@ module I18n::Backend
       end
 
       # The requested key might not be a parent node in a hierarchy of keys instead of a regular 'leaf' node
-      #   that would simply result in a string return.  If so, check the database for possible children 
+      #   that would simply result in a string return.  If so, check the database for possible children
       #   and return them in a nested hash if we find them.
       #   We can safely ignore pluralization indeces here since they should never apply to a hash return
       if !entry && (key.is_a?(String) || key.is_a?(Symbol))
@@ -78,7 +78,7 @@ module I18n::Backend
 
       # we check the database before creating a translation as we can have translations with nil values
       # if we still have no blasted translation just go and create one for the current locale!
-      unless entry 
+      unless entry
         pluralization_index = (options[:count].nil? || options[:count] == 1) ? 1 : 0
         translation =  @locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) ||
                        @locale.create_translation(key, key, pluralization_index)
@@ -93,14 +93,14 @@ module I18n::Backend
       entry.is_a?(Array) ? entry.dup : entry # array's can get frozen with cache writes
     end
 
-    # Acts the same as +strftime+, but returns a localized version of the 
-    # formatted date string. Takes a key from the date/time formats 
-    # translations as a format argument (<em>e.g.</em>, <tt>:short</tt> in <tt>:'date.formats'</tt>).        
+    # Acts the same as +strftime+, but returns a localized version of the
+    # formatted date string. Takes a key from the date/time formats
+    # translations as a format argument (<em>e.g.</em>, <tt>:short</tt> in <tt>:'date.formats'</tt>).
     def localize(locale, object, format = :default, options = {})
       raise ArgumentError, "Object must be a Date, DateTime or Time object. #{object.inspect} given." unless object.respond_to?(:strftime)
-      
+
       locale_in_context(locale)
-      
+
       unless format.to_s.index('%') # Unless a custom format is passed
         type = object.respond_to?(:sec) ? 'time' : 'date'
         if lookup(@locale, "#{type}.formats.#{format.to_s}") # Translation is in the database
@@ -111,13 +111,13 @@ module I18n::Backend
           format = translate(locale, "#{type}.formats.#{format.to_s}")
         end
       end
-      
-      format.gsub!(/%a/, translate(locale, "date.abbr_day_names")[object.wday]) 
+
+      format.gsub!(/%a/, translate(locale, "date.abbr_day_names")[object.wday])
       format.gsub!(/%A/, translate(locale, "date.day_names")[object.wday])
       format.gsub!(/%b/, translate(locale, "date.abbr_month_names")[object.mon])
       format.gsub!(/%B/, translate(locale, "date.month_names")[object.mon])
       format.gsub!(/%p/, translate(locale, "time.#{object.hour < 12 ? :am : :pm}")) if object.respond_to? :hour
-      
+
       object.strftime(format)
     end
 
@@ -155,7 +155,7 @@ module I18n::Backend
         when 1
           value = translations.first.value_or_default
         else
-          value = translations.inject([]) do |values, t| 
+          value = translations.inject([]) do |values, t|
             values[t.pluralization_index] = t.value_or_default
             values
           end
@@ -164,18 +164,18 @@ module I18n::Backend
         return value
       end
     end
-    
+
   protected
     # keep a local copy of the locale in context for use within the translation
     # routine, and also accept an arbitrary locale for one time locale lookups
     def locale_in_context(locale)
       return @locale if @locale && @locale.code == locale.to_s
       return @locale unless locale.class == String || locale.class == Symbol
-      @locale = I18n::Backend::Locale.find_by_code(locale.to_s)
+      @locale = I18n::Backend::Locale.find_or_create_by_code(locale.to_s)
       raise I18n::InvalidLocale.new(locale) unless @locale
     end
 
-    # looks up translations for the default locale, and if they exist untranslated records are created for the locale and the default locale values are returned 
+    # looks up translations for the default locale, and if they exist untranslated records are created for the locale and the default locale values are returned
     def use_and_copy_default_locale_translations_if_they_exist(locale, key)
       default_locale_entry = lookup(I18n::Backend::Locale.default_locale, key)
       return unless default_locale_entry
@@ -185,7 +185,7 @@ module I18n::Backend
           locale.create_translation(key, nil, index) if entry
         end
       else
-        locale.create_translation(key, nil) 
+        locale.create_translation(key, nil)
       end
 
       return default_locale_entry
@@ -198,18 +198,18 @@ module I18n::Backend
     end
 
     # Interpolates values into a given string.
-    # 
-    #   interpolate "file {{file}} opened by \\{{user}}", :file => 'test.txt', :user => 'Mr. X'  
+    #
+    #   interpolate "file {{file}} opened by \\{{user}}", :file => 'test.txt', :user => 'Mr. X'
     #   # => "file test.txt opened by {{user}}"
-    # 
+    #
     # Note that you have to double escape the <tt>\\</tt> when you want to escape
     # the <tt>{{...}}</tt> key in a string (once for the string and once for the
     # interpolation).
     def interpolate(locale, string, values = {})
       return string unless string.is_a?(String)
-      
+
       string = string.dup # It returns an error if not duplicated
-      
+
       if string.respond_to?(:force_encoding)
         original_encoding = string.encoding
         string.force_encoding(Encoding::BINARY)
