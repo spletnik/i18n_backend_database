@@ -68,7 +68,9 @@ module I18n::Backend
       if !entry && (key.is_a?(String) || key.is_a?(Symbol))
         #We need to escape % and \.  Rails will handle the rest.
         escaped_key = key.to_s.gsub('\\', '\\\\\\\\').gsub(/%/, '\%')
-        children = @locale.translations.find :all, :conditions => ["raw_key like ?", "#{escaped_key}.%"]
+        # Only taking those translations that in which the beggining of the raw_key is EXACTLY like the given case. This means it's not case sensitive.
+        # This allows to use Number as a normal key and number.whatever.whatever.. as the scoped key.
+        children = @locale.translations.where(["raw_key like ?", "#{escaped_key}.%"]).select{|child| child.raw_key.index(/#{escaped_key}/) == 0}
         if children.size > 0
           entry = hashify_record_array(key.to_s, children)
           @cache_store.write(Translation.ck(@locale, key), entry) unless cache_lookup == true
@@ -80,6 +82,8 @@ module I18n::Backend
       # if we still have no blasted translation just go and create one for the current locale!
       unless entry 
         pluralization_index = (options[:count].nil? || options[:count] == 1) ? 1 : 0
+        key = key.to_s
+        key.gsub!('.one', '') if key.ends_with?('.one')
         translation =  @locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) ||
                        @locale.create_translation(key, key, pluralization_index)
         entry = translation.value_or_default
@@ -199,8 +203,8 @@ module I18n::Backend
 
     # Interpolates values into a given string.
     # 
-    #   interpolate "file {{file}} opened by \\{{user}}", :file => 'test.txt', :user => 'Mr. X'  
-    #   # => "file test.txt opened by {{user}}"
+    #   interpolate "file %{file} opened by \\%{user}", :file => 'test.txt', :user => 'Mr. X'
+    #   # => "file test.txt opened by %{user}"
     # 
     # Note that you have to double escape the <tt>\\</tt> when you want to escape
     # the <tt>{{...}}</tt> key in a string (once for the string and once for the

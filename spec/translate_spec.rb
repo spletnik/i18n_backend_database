@@ -186,19 +186,19 @@ describe I18n::Backend::Database do
 
       it "should be able to handle interpolated values" do
         options = {:some_value => 'INTERPOLATED'}
-        @english_locale.translations.create!(:key => 'Fred', :value => 'Fred has been {{some_value}}!!')
+        @english_locale.translations.create!(:key => 'Fred', :value => 'Fred has been %{some_value}!!')
         @backend.translate("en", 'Fred', options).should == 'Fred has been INTERPOLATED!!'
       end
 
-      it "should be able to handle interpolated values with 'Fred {{some_value}}' also as the key" do
+      it "should be able to handle interpolated values with 'Fred %{some_value}' also as the key" do
         options = {:some_value => 'INTERPOLATED'}
-        @english_locale.translations.create!(:key => 'Fred {{some_value}}', :value => 'Fred {{some_value}}!!')
-        @backend.translate("en", 'Fred {{some_value}}', options).should == 'Fred INTERPOLATED!!'
+        @english_locale.translations.create!(:key => 'Fred %{some_value}', :value => 'Fred %{some_value}!!')
+        @backend.translate("en", 'Fred %{some_value}', options).should == 'Fred INTERPOLATED!!'
       end
 
       it "should be able to handle interpolated count values" do
         options = {:count=>1, :model => ["Cheese"], :scope=>[:activerecord, :errors], :default=>["Locale"]}
-        @english_locale.translations.create!(:key => 'activerecord.errors.messages.blank', :value => '{{count}} errors prohibited this {{model}} from being saved')
+        @english_locale.translations.create!(:key => 'activerecord.errors.messages.blank', :value => '%{count} errors prohibited this %{model} from being saved')
         @backend.translate("en", :"messages.blank", options).should == '1 errors prohibited this Cheese from being saved'
       end
 
@@ -209,8 +209,8 @@ describe I18n::Backend::Database do
       end
 
       it "should be able to handle pluralization" do
-        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '1 error prohibited this {{model}} from being saved', :pluralization_index => 1)
-        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '{{count}} errors prohibited this {{model}} from being saved', :pluralization_index => 0)
+        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '1 error prohibited this %{model} from being saved', :pluralization_index => 1)
+        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '%{count} errors prohibited this %{model} from being saved', :pluralization_index => 0)
 
         options = {:count=>1, :model=>"translation", :scope=>[:activerecord, :errors, :template]}
         @backend.translate("en", :"header", options).should == "1 error prohibited this translation from being saved"
@@ -387,20 +387,20 @@ describe I18n::Backend::Database do
 
       it "should be able to handle interpolated values" do
         options = {:some_value => 'INTERPOLATED'}
-        @english_locale.translations.create!(:key => 'Fred', :value => 'Fred has been {{some_value}}!!')
-        @spanish_locale.translations.create!(:key => 'Fred', :value => 'Fred ha sido {{some_value}}!!')
+        @english_locale.translations.create!(:key => 'Fred', :value => 'Fred has been %{some_value}!!')
+        @spanish_locale.translations.create!(:key => 'Fred', :value => 'Fred ha sido %{some_value}!!')
         @backend.translate("es", 'Fred', options).should == 'Fred ha sido INTERPOLATED!!'
       end
 
       it "should be able to handle interpolated count values" do
         options = {:count=>1, :model => ["Cheese"], :scope=>[:activerecord, :errors], :default=>["Locale"]}
-        @english_locale.translations.create!(:key => 'activerecord.errors.messages.blank', :value => '{{count}} error prohibited this {{model}} from being saved')
+        @english_locale.translations.create!(:key => 'activerecord.errors.messages.blank', :value => '%{count} error prohibited this %{model} from being saved')
         @backend.translate("es", :"messages.blank", options).should == '1 error prohibited this Cheese from being saved'
       end
 
       it "should be able to handle pluralization" do
-        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '1 error prohibited this {{model}} from being saved', :pluralization_index => 1)
-        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '{{count}} errors prohibited this {{model}} from being saved', :pluralization_index => 0)
+        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '1 error prohibited this %{model} from being saved', :pluralization_index => 1)
+        @english_locale.translations.create!(:key => 'activerecord.errors.template.header', :value => '%{count} errors prohibited this %{model} from being saved', :pluralization_index => 0)
         options = {:count=>1, :model=>"translation", :scope=>[:activerecord, :errors, :template]}
         @backend.translate("es", :"header", options).should == "1 error prohibited this translation from being saved"
         @spanish_locale.should have(2).translations

@@ -18,23 +18,25 @@ class I18nUtil
   def self.load_from_yml(file_name)
     data = YAML::load(IO.read(file_name))
     data.each do |code, translations| 
-      locale = I18n::Backend::Locale.find_by_code(code)
-      raise "Locale not found: #{code}" unless locale
-      translations_array = extract_translations_from_hash(translations)
-      translations_array.each do |key, value|
-        pluralization_index = 1
-        key.gsub!('.one', '') if key.ends_with?('.one')
-        if key.ends_with?('.other')
-          key.gsub!('.other', '')
-          pluralization_index = 0
-        end
-        if value.is_a?(Array)
-          value.each_with_index do |v, index|
-            create_translation(locale, key, index, v) unless v.nil?
+      if locale = I18n::Backend::Locale.find_by_code(code)
+        translations_array = extract_translations_from_hash(translations)
+        translations_array.each do |key, value|
+          pluralization_index = 1
+          key.gsub!('.one', '') if key.ends_with?('.one')
+          if key.ends_with?('.other')
+            key.gsub!('.other', '')
+            pluralization_index = 0
           end
-        else
-          create_translation(locale, key, pluralization_index, value)
+          if value.is_a?(Array)
+            value.each_with_index do |v, index|
+              create_translation(locale, key, index, v) unless v.nil?
+            end
+          else
+            create_translation(locale, key, pluralization_index, value)
+          end
         end
+      else
+        puts "WARNING: Locale not found: #{code} -- #{file_name}"
       end
     end
   end
@@ -108,7 +110,7 @@ class I18nUtil
         unless locale.translations.exists?(:key => t.key, :pluralization_index => t.pluralization_index)
           value = t.value =~ /^---(.*)\n/ ? t.value : nil # well will copy across YAML, like symbols
           locale.translations.create!(:key => t.raw_key, :value => value, :pluralization_index => t.pluralization_index)
-          puts "synchronizing has created translation for #{locale.code} : #{t.raw_key} : #{t.pluralization_index}" unless RAILS_ENV['test']
+          puts "synchronizing has created translation for #{locale.code} : #{t.raw_key} : #{t.pluralization_index}" unless Rails.env.test?
         end
       end
     end
@@ -128,7 +130,7 @@ class I18nUtil
             placeholder_value = 990 # at least in :es it seems to leave a 3 digit number in the postion on the string
             placeholders = {}
 
-            # replace {{interpolation_arguments}} with a numeric place holder
+            # replace %{interpolation_arguments} with a numeric place holder
             interpolation_arguments.each do |interpolation_argument|
               default_locale_value.gsub!("{{#{interpolation_argument}}}", "#{placeholder_value}")
               placeholders[placeholder_value] = interpolation_argument
@@ -138,7 +140,7 @@ class I18nUtil
             # translate string
             translated_value = GoogleLanguage.translate(default_locale_value, locale.code, Locale.default_locale.code)
 
-            # replace numeric place holders with {{interpolation_arguments}} 
+            # replace numeric place holders with %{interpolation_arguments}
             placeholders.each {|placeholder_value,interpolation_argument| translated_value.gsub!("#{placeholder_value}", "{{#{interpolation_argument}}}") }
             translation.value = translated_value
             translation.save!
