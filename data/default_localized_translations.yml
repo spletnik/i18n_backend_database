@@ -21,6 +21,7 @@ en:
       - Fri
       - Sat
     month_names: 
+      - ~
       - January
       - February
       - March
@@ -34,6 +35,7 @@ en:
       - November
       - December
     abbr_month_names: 
+      - ~
       - Jan
       - Feb
       - Mar
