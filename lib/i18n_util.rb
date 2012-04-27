@@ -95,7 +95,11 @@ class I18nUtil
         assets += translated_objects(item) unless item.ends_with?('i18n_backend_database') # ignore self
       elsif item.ends_with?('.rb') || item.ends_with?('.js') || item.ends_with?('.erb')
         File.readlines(item).each do |l|
-          assets += l.scan(/I18n.t\((.*?)\)/).flatten
+          begin
+            assets += l.scan(/I18n.t\((.*?)\)/).flatten
+          rescue
+            puts "WARNING:#{$!} in file #{item} with line '#{l}'"
+          end
         end
       end
     end
