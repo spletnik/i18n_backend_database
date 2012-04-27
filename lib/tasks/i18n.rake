@@ -3,7 +3,7 @@ namespace :i18n do
   task :clear_cache => :environment do
     I18n.backend.cache_store.clear
   end
-  
+
   desc 'Extracts translation data from database into fixtures'
   task :export_translations => :environment do
     locale_codes = ENV['locale'] || I18n::Backend::Locale.all.map(&:code).join(',')
@@ -26,17 +26,17 @@ namespace :i18n do
       raise "No translations found for '#{locale.code}'" unless (translations = YAML::load_file(translation_file))
       puts "Importing #{translations.length} translations for '#{locale.code}'..."
       Translation.delete_all(:locale_id => locale.id)
-      translations.each do |translation| 
+      translations.each do |translation|
         Translation.create!(
-          :key => translation['key'], 
-          :value => translation['value'], 
-          :pluralization_index => translation['pluralization_index'], 
+          :key => translation['key'],
+          :value => translation['value'],
+          :pluralization_index => translation['pluralization_index'],
           :locale_id => locale.id
         )
       end
     end
   end
-  
+
   namespace :populate do
     desc 'Populate the locales and translations tables from all Rails Locale YAML files. Can set LOCALE_YAML_FILES to comma separated list of files to overide'
     task :from_rails => :environment do

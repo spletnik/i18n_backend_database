@@ -132,7 +132,7 @@ class I18nUtil
 
             # replace %{interpolation_arguments} with a numeric place holder
             interpolation_arguments.each do |interpolation_argument|
-              default_locale_value.gsub!("{{#{interpolation_argument}}}", "#{placeholder_value}")
+              default_locale_value.gsub!("%{#{interpolation_argument}}", "#{placeholder_value}")
               placeholders[placeholder_value] = interpolation_argument
               placeholder_value += 1
             end
@@ -141,7 +141,7 @@ class I18nUtil
             translated_value = GoogleLanguage.translate(default_locale_value, locale.code, Locale.default_locale.code)
 
             # replace numeric place holders with %{interpolation_arguments}
-            placeholders.each {|placeholder_value,interpolation_argument| translated_value.gsub!("#{placeholder_value}", "{{#{interpolation_argument}}}") }
+            placeholders.each {|placeholder_value,interpolation_argument| translated_value.gsub!("#{placeholder_value}", "%{#{interpolation_argument}}") }
             translation.value = translated_value
             translation.save!
           end
