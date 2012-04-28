@@ -3,8 +3,6 @@ require 'rails'
 
 module I18nBackendDatabase
   class Railtie < Rails::Railtie
-    railtie_name :i18n_backend_database
-
     initializer "i18n_backend_database.initialize" do |app|
       I18n.backend = I18n::Backend::Database.new
     end
