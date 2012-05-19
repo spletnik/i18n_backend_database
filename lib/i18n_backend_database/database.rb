@@ -123,6 +123,7 @@ module I18n::Backend
         end
       end
 
+      format = format.dup
       format.gsub!(/%a/, translate(locale, "date.abbr_day_names")[object.wday])
       format.gsub!(/%A/, translate(locale, "date.day_names")[object.wday])
       format.gsub!(/%b/, translate(locale, "date.abbr_month_names")[object.mon])
