@@ -22,7 +22,7 @@ module I18n::Backend
     end
 
     def create_translation(key, value, pluralization_index=1)
-      conditions = {:key => key, :raw_key => key.to_s, :pluralization_index => pluralization_index}
+      conditions = {:key => key, :raw_key => key.to_s, :pluralization_index => pluralization_index, :source_id => I18nUtil.current_load_source.to_param}
 
       # set the key as the value if we're using the default locale and the key is a string
       conditions.merge!({:value => value}) if (self.code == I18n.default_locale.to_s && key.is_a?(String))

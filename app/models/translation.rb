@@ -1,6 +1,7 @@
 require 'digest/md5'
 class Translation < ActiveRecord::Base
   belongs_to :locale, :class_name => 'I18n::Backend::Locale'
+  belongs_to :source, :class_name => 'TranslationSource'
   validates_presence_of :key
   before_validation :generate_hash_key, :on => :create
   after_update :update_cache
