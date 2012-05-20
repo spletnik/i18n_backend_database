@@ -38,9 +38,20 @@ namespace :i18n do
   end
 
   namespace :populate do
+    I18nUtil.verbose = ENV['VERBOSE'] == 'true'
+
     desc 'Populate the locales and translations tables from all Rails Locale YAML files. Can set LOCALE_YAML_FILES to comma separated list of files to overide'
     task :from_rails => :environment do
-      yaml_files = ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path
+      puts "CALLED HERE!!"
+      begin
+        puts '---------------------------------------------------------'
+        raise 'test'
+      rescue
+        $@.each{|line| puts line}
+        puts '---------------------------------------------------------'
+      end
+      yaml_files = (ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path).uniq.select{|path| path =~ /\.yml$/}
+      yaml_files.each{|file| puts file} if I18nUtil.verbose?
       yaml_files.each do |file|
         I18nUtil.load_from_yml file
       end
@@ -63,7 +74,7 @@ namespace :i18n do
     end
 
     desc 'Runs all populate methods in this order: load_default_locales, from_rails, from_application, synchronize_translations'
-    task :all => ["load_default_locales", "from_rails", "from_application", "synchronize_translations"]
+    task :all => %w(load_default_locales from_rails from_application synchronize_translations)
   end
 
   namespace :translate do

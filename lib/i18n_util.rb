@@ -1,6 +1,14 @@
 class I18nUtil
 
   DEFAULT_TRANSLATION_PATH  = 'config/translations'
+
+  def self.verbose?
+    @@verbose
+  end
+
+  def self.verbose=(value)
+    @@verbose = value
+  end
   
   def self.load_default_locales(path_to_file = nil)
     path_to_file ||= File.join(File.dirname(__FILE__), "../data", "locales.yml")
@@ -16,6 +24,7 @@ class I18nUtil
 
   # Create tanslation records from the YAML file.  Will create the required locales if they do not exist.
   def self.load_from_yml(file_name)
+    puts "LOAD YAML: #{file_name}" if verbose?
     data = YAML::load(IO.read(file_name))
     data.each do |code, translations| 
       if locale = I18n::Backend::Locale.find_by_code(code)
@@ -35,18 +44,17 @@ class I18nUtil
             create_translation(locale, key, pluralization_index, value)
           end
         end
-      else
-        puts "WARNING: Locale not found: #{code} -- #{file_name}"
       end
     end
   end
 
   # Finds or creates a translation record and updates the value
   def self.create_translation(locale, key, pluralization_index, value)
-    translation = locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) # find existing record by hash key
-    unless translation # or build new one with raw key
+    if translation = locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) # find existing record by hash key
+      puts "...UPDATE #{locale.code} : #{key} : #{pluralization_index}" if verbose?
+    else
       translation = locale.translations.build(:key => key, :pluralization_index => pluralization_index)
-      puts "from yaml create translation for #{locale.code} : #{key} : #{pluralization_index}" unless Rails.env.test?
+      puts "...ADD    #{locale.code} : #{key} : #{pluralization_index}" if verbose?
     end
     translation.value = value
     translation.save!
@@ -113,12 +121,13 @@ class I18nUtil
   # Populate translation records from the default locale to other locales if no record exists.
   def self.synchronize_translations
     non_default_locales = I18n::Backend::Locale.non_defaults
+    puts "CHECKING FOR MISSES - #{non_default_locales}" if verbose?
     I18n::Backend::Locale.default_locale.translations.each do |t|
       non_default_locales.each do |locale|
         unless locale.translations.exists?(:key => t.key, :pluralization_index => t.pluralization_index)
           value = t.value =~ /^---(.*)\n/ ? t.value : nil # well will copy across YAML, like symbols
           locale.translations.create!(:key => t.raw_key, :value => value, :pluralization_index => t.pluralization_index)
-          puts "synchronizing has created translation for #{locale.code} : #{t.raw_key} : #{t.pluralization_index}" unless Rails.env.test?
+          puts "...MISSING #{locale.code} : #{t.raw_key} : #{t.pluralization_index}" if verbose?
         end
       end
     end
