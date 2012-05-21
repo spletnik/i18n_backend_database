@@ -108,12 +108,6 @@ class I18nUtil
         puts "SOURCE: #{source.path}" if verbose? and source != last_source
         set_current_load_source((last_source = source).full_path.to_s)
         I18n.t(match, options) # default locale first
-        locales = I18n::Backend::Locale.available_locales
-        locales.delete(I18n.default_locale)
-        # translate for other locales
-        locales.each do |locale|
-          I18n.t(match, options.merge(:locale => locale))
-        end
       rescue
         puts "WARNING:#{$!} SOURCE:#{source && source.path} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
         $@.each{|line| puts line}
