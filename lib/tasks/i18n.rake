@@ -58,7 +58,7 @@ namespace :i18n do
 
     desc 'Populate the locales and translations tables from all Rails Locale YAML files. Can set LOCALE_YAML_FILES to comma separated list of files to overide'
     task :from_rails => :environment do
-      yaml_files = (ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path).uniq.select{|path| path =~ /\.yml$/}
+      yaml_files = (ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path).select{|path| path =~ /\.yml$/}
       yaml_files.each do |file|
         I18nUtil.load_from_yml file
       end

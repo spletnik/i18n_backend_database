@@ -18,7 +18,7 @@ class I18nUtil
   end
 
   def self.set_current_load_source(path)
-    path = path[Rails.root.to_s.length..-1] if app_root = (path and path.index(Rails.root.to_s) == 0)
+    path = path[Rails.root.to_s.length..-1] if app_root = path.to_s.index(Rails.root.to_s) == 0
     @@current_load_source = TranslationSource.find_by_path(path) || TranslationSource.new(:app_root => app_root,:path => path) unless @@current_load_source and @@current_load_source.path == path
     if block_given?
       yield
@@ -97,24 +97,26 @@ class I18nUtil
   # Create translation records for all existing locales from translation calls with the application. 
   # Ignores errors from tranlations that require objects.
   def self.seed_application_translations(dir='app')
-    translated_objects(dir).each do |object|
-      interpolation_arguments= object.scan(/\{\{(.*?)\}\}/).flatten
-      object = object[/'(.*?)'/, 1] || object[/"(.*?)"/, 1]
-      options = {}
-      interpolation_arguments.each { |arg|  options[arg.to_sym] = nil }
-      next if object.nil?
+    last_source = nil
+    translated_objects(dir).each do |match,source|
+      next unless match = [/'(.*?)'/,/"(.*?)"/,/\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length]}.sort.first.last
 
       begin
-        puts "translating for #{object} with options #{options.inspect}" unless Rails.env.test?
-        I18n.t(object, options) # default locale first
+        interpolation_arguments= match.scan(/\%\{(.*?)\}/).flatten
+        options = interpolation_arguments.inject({}) { |options,arg|  options[arg.to_sym] = nil; options }
+
+        puts "SOURCE: #{source.path}" if verbose? and source != last_source
+        set_current_load_source((last_source = source).full_path.to_s)
+        I18n.t(match, options) # default locale first
         locales = I18n::Backend::Locale.available_locales
         locales.delete(I18n.default_locale)
         # translate for other locales
         locales.each do |locale|
-          I18n.t(object, options.merge(:locale => locale))
+          I18n.t(match, options.merge(:locale => locale))
         end
       rescue
         puts "WARNING:#{$!}"
+        $@.each{|line| puts line}
       end
 
     end
@@ -129,7 +131,7 @@ class I18nUtil
         set_current_load_source(item) do
           File.readlines(item).each do |l|
             begin
-              assets += l.scan(/I18n.t\((.*?)\)/).flatten
+              assets += l.scan(/(I18n\.t|\Wt)\((.*?)\)/).collect{|pair| [pair.last,current_load_source(false)]}
             rescue
               puts "WARNING:#{$!} in file #{item} with line '#{l}'"
             end

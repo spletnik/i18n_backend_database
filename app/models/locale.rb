@@ -27,6 +27,7 @@ module I18n::Backend
       # set the key as the value if we're using the default locale and the key is a string
       conditions.merge!({:value => value}) if (self.code == I18n.default_locale.to_s && key.is_a?(String))
       translation = self.translations.create(conditions)
+      puts "...NEW #{self.code} : #{key} : #{pluralization_index}" if I18nUtil.verbose?
 
       # hackity hack.  bug #922 maybe?
       self.connection.commit_db_transaction unless Rails.env.test?
