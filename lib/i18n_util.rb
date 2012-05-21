@@ -2,6 +2,8 @@ class I18nUtil
 
   DEFAULT_TRANSLATION_PATH  = 'config/translations'
 
+  @@verbose,@@current_load_source = nil,nil
+
   def self.verbose?
     @@verbose
   end
@@ -9,8 +11,6 @@ class I18nUtil
   def self.verbose=(value)
     @@verbose = value
   end
-
-  @@current_load_source = nil
 
   def self.current_load_source(ensure_saved = true)
     @@current_load_source.save! if @@current_load_source and ensure_saved
@@ -81,7 +81,7 @@ class I18nUtil
   end
 
   def self.extract_translations_from_hash(hash, parent_keys = [])
-    hash.inject([]) do |keys, (key, value)|
+    (hash || {}).inject([]) do |keys, (key, value)|
       full_key = parent_keys + [key]
       if value.is_a?(Hash)
         # Nested hash
