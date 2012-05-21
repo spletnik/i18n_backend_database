@@ -1,3 +1,5 @@
+require_relative '../i18n_util'
+
 module I18n::Backend
   class Database
     INTERPOLATION_RESERVED_KEYS = %w(scope default)

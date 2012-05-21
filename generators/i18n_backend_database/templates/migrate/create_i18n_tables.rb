@@ -12,8 +12,13 @@ class CreateI18nTables < ActiveRecord::Migration
       t.text     :value
       t.integer  :pluralization_index, :default => 1
       t.integer  :locale_id
+      t.integer  :source_id
     end
     add_index :translations, [:locale_id, :key, :pluralization_index]
+
+    create_table :translation_sources do |t|
+      t.string   :path
+    end
 
   end
 
@@ -21,5 +26,6 @@ class CreateI18nTables < ActiveRecord::Migration
     drop_table :locales
     drop_table :translations
     drop_table :asset_translations
+    drop_table :translation_sources
   end
 end

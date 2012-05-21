@@ -9,6 +9,23 @@ class I18nUtil
   def self.verbose=(value)
     @@verbose = value
   end
+
+  @@current_load_source = nil
+
+  def self.current_load_source(ensure_saved = true)
+    @@current_load_source.save! if @@current_load_source and ensure_saved
+    @@current_load_source
+  end
+
+  def self.set_current_load_source(path)
+    path = path[(Rails.root.to_s.length + 1)..-1] if path.to_s.index(Rails.root.to_s) == 0
+    @@current_load_source = TranslationSource.find_by_path(path) || TranslationSource.new(:path => path) unless @@current_load_source and @@current_load_source.path == path
+    if block_given?
+      yield
+      @@current_load_source = nil
+    end
+    @@current_load_source
+  end
   
   def self.load_default_locales(path_to_file = nil)
     path_to_file ||= File.join(File.dirname(__FILE__), "../data", "locales.yml")
@@ -24,24 +41,26 @@ class I18nUtil
 
   # Create tanslation records from the YAML file.  Will create the required locales if they do not exist.
   def self.load_from_yml(file_name)
-    puts "LOAD YAML: #{file_name}" if verbose?
-    data = YAML::load(IO.read(file_name))
-    data.each do |code, translations| 
-      if locale = I18n::Backend::Locale.find_by_code(code)
-        translations_array = extract_translations_from_hash(translations)
-        translations_array.each do |key, value|
-          pluralization_index = 1
-          key.gsub!('.one', '') if key.ends_with?('.one')
-          if key.ends_with?('.other')
-            key.gsub!('.other', '')
-            pluralization_index = 0
-          end
-          if value.is_a?(Array)
-            value.each_with_index do |v, index|
-              create_translation(locale, key, index, v) unless v.nil?
+    set_current_load_source(file_name) do
+      puts "LOAD YAML: #{file_name}" if verbose?
+      data = YAML::load(IO.read(file_name))
+      data.each do |code, translations|
+        if locale = I18n::Backend::Locale.find_by_code(code)
+          translations_array = extract_translations_from_hash(translations)
+          translations_array.each do |key, value|
+            pluralization_index = 1
+            key.gsub!('.one', '') if key.ends_with?('.one')
+            if key.ends_with?('.other')
+              key.gsub!('.other', '')
+              pluralization_index = 0
             end
-          else
-            create_translation(locale, key, pluralization_index, value)
+            if value.is_a?(Array)
+              value.each_with_index do |v, index|
+                create_translation(locale, key, index, v) unless v.nil?
+              end
+            else
+              create_translation(locale, key, pluralization_index, value)
+            end
           end
         end
       end
@@ -57,6 +76,7 @@ class I18nUtil
       puts "...ADD    #{locale.code} : #{key} : #{pluralization_index}" if verbose?
     end
     translation.value = value
+    translation.source = current_load_source
     translation.save!
   end
 
@@ -77,24 +97,26 @@ class I18nUtil
   # Create translation records for all existing locales from translation calls with the application. 
   # Ignores errors from tranlations that require objects.
   def self.seed_application_translations(dir='app')
-    translated_objects(dir).each do |object|
-      interpolation_arguments= object.scan(/\{\{(.*?)\}\}/).flatten
-      object = object[/'(.*?)'/, 1] || object[/"(.*?)"/, 1]
-      options = {}
-      interpolation_arguments.each { |arg|  options[arg.to_sym] = nil }
-      next if object.nil?
+    last_source = nil
+    translated_objects(dir).each do |match,source|
+      next unless match = [/'(.*?)'/,/"(.*?)"/,/\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length,nil]}.sort.first.last
 
       begin
-        puts "translating for #{object} with options #{options.inspect}" unless Rails.env.test?
-        I18n.t(object, options) # default locale first
+        interpolation_arguments= match.scan(/\%\{(.*?)\}/).flatten
+        options = interpolation_arguments.inject({}) { |options,arg|  options[arg.to_sym] = nil; options }
+
+        puts "SOURCE: #{source.path}" if verbose? and source != last_source
+        set_current_load_source((last_source = source).full_path.to_s)
+        I18n.t(match, options) # default locale first
         locales = I18n::Backend::Locale.available_locales
         locales.delete(I18n.default_locale)
         # translate for other locales
         locales.each do |locale|
-          I18n.t(object, options.merge(:locale => locale))
+          I18n.t(match, options.merge(:locale => locale))
         end
       rescue
-        puts "WARNING:#{$!}"
+        puts "WARNING:#{$!} SOURCE:#{source && source.path} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
+        $@.each{|line| puts line}
       end
 
     end
@@ -106,11 +128,13 @@ class I18nUtil
       if File.directory?(item)
         assets += translated_objects(item) unless item.ends_with?('i18n_backend_database') # ignore self
       elsif item.ends_with?('.rb') || item.ends_with?('.js') || item.ends_with?('.erb')
-        File.readlines(item).each do |l|
-          begin
-            assets += l.scan(/I18n.t\((.*?)\)/).flatten
-          rescue
-            puts "WARNING:#{$!} in file #{item} with line '#{l}'"
+        set_current_load_source(item) do
+          File.readlines(item).each_with_index do |line,index|
+            begin
+              assets += line.scan(/(I18n\.t|\Wt)\((.*?)\)/).collect{|pair| [pair.last,current_load_source(false)]}
+            rescue
+              puts "WARNING:#{$!} in file #{item} with line '#{line}'"
+            end
           end
         end
       end
@@ -120,6 +144,7 @@ class I18nUtil
 
   # Populate translation records from the default locale to other locales if no record exists.
   def self.synchronize_translations
+    set_current_load_source(nil)
     non_default_locales = I18n::Backend::Locale.non_defaults
     puts "CHECKING FOR MISSES - #{non_default_locales}" if verbose?
     I18n::Backend::Locale.default_locale.translations.each do |t|
@@ -134,6 +159,7 @@ class I18nUtil
   end
 
   def self.google_translate
+    set_current_load_source(nil)
     Locale.non_defaults.each do |locale|
       locale.translations.untranslated.each do |translation|
         default_locale_value = translation.default_locale_value
@@ -142,6 +168,7 @@ class I18nUtil
 
           if interpolation_arguments.empty?
             translation.value = GoogleLanguage.translate(default_locale_value, locale.code, Locale.default_locale.code)
+            translation.source = current_load_source
             translation.save!
           else
             placeholder_value = 990 # at least in :es it seems to leave a 3 digit number in the postion on the string
@@ -160,6 +187,7 @@ class I18nUtil
             # replace numeric place holders with %{interpolation_arguments}
             placeholders.each {|placeholder_value,interpolation_argument| translated_value.gsub!("#{placeholder_value}", "%{#{interpolation_argument}}") }
             translation.value = translated_value
+            translation.source = current_load_source
             translation.save!
           end
         end
