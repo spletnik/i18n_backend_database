@@ -18,8 +18,8 @@ class I18nUtil
   end
 
   def self.set_current_load_source(path)
-    path = path[Rails.root.to_s.length..-1] if app_root = path.to_s.index(Rails.root.to_s) == 0
-    @@current_load_source = TranslationSource.find_by_path(path) || TranslationSource.new(:app_root => app_root,:path => path) unless @@current_load_source and @@current_load_source.path == path
+    path = path[(Rails.root.to_s.length + 1)..-1] if path.to_s.index(Rails.root.to_s) == 0
+    @@current_load_source = TranslationSource.find_by_path(path) || TranslationSource.new(:path => path) unless @@current_load_source and @@current_load_source.path == path
     if block_given?
       yield
       @@current_load_source = nil
@@ -99,7 +99,7 @@ class I18nUtil
   def self.seed_application_translations(dir='app')
     last_source = nil
     translated_objects(dir).each do |match,source|
-      next unless match = [/'(.*?)'/,/"(.*?)"/,/\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length]}.sort.first.last
+      next unless match = [/'(.*?)'/,/"(.*?)"/,/\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length,nil]}.sort.first.last
 
       begin
         interpolation_arguments= match.scan(/\%\{(.*?)\}/).flatten
@@ -115,7 +115,7 @@ class I18nUtil
           I18n.t(match, options.merge(:locale => locale))
         end
       rescue
-        puts "WARNING:#{$!}"
+        puts "WARNING:#{$!} SOURCE:#{source && source.path} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
         $@.each{|line| puts line}
       end
 
@@ -129,11 +129,11 @@ class I18nUtil
         assets += translated_objects(item) unless item.ends_with?('i18n_backend_database') # ignore self
       elsif item.ends_with?('.rb') || item.ends_with?('.js') || item.ends_with?('.erb')
         set_current_load_source(item) do
-          File.readlines(item).each do |l|
+          File.readlines(item).each_with_index do |line,index|
             begin
-              assets += l.scan(/(I18n\.t|\Wt)\((.*?)\)/).collect{|pair| [pair.last,current_load_source(false)]}
+              assets += line.scan(/(I18n\.t|\Wt)\((.*?)\)/).collect{|pair| [pair.last,current_load_source(false)]}
             rescue
-              puts "WARNING:#{$!} in file #{item} with line '#{l}'"
+              puts "WARNING:#{$!} in file #{item} with line '#{line}'"
             end
           end
         end

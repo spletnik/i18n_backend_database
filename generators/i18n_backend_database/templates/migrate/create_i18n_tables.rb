@@ -17,7 +17,6 @@ class CreateI18nTables < ActiveRecord::Migration
     add_index :translations, [:locale_id, :key, :pluralization_index]
 
     create_table :translation_sources do |t|
-      t.boolean  :app_root,:null => false,:default => false
       t.string   :path
     end
 
