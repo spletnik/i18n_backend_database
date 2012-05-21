@@ -22,7 +22,9 @@ module I18n::Backend
     end
 
     def create_translation(key, value, pluralization_index=1)
-      conditions = {:key => key, :raw_key => key.to_s, :pluralization_index => pluralization_index, :source_id => I18nUtil.current_load_source.to_param}
+      conditions = {:key => key, :raw_key => key.to_s, :pluralization_index => pluralization_index}
+
+      conditions[:source_id] = I18nUtil.current_load_source.to_param if attribute_names.include?(:source_id) # TODO does this NEED to happen? occurs when adding "source_id" migration to legacy installs
 
       # set the key as the value if we're using the default locale and the key is a string
       conditions.merge!({:value => value}) if (self.code == I18n.default_locale.to_s && key.is_a?(String))

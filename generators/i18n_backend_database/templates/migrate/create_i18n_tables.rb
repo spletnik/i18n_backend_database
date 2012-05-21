@@ -25,7 +25,6 @@ class CreateI18nTables < ActiveRecord::Migration
   def self.down
     drop_table :locales
     drop_table :translations
-    drop_table :asset_translations
     drop_table :translation_sources
   end
 end

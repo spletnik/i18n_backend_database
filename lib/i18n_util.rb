@@ -28,7 +28,8 @@ class I18nUtil
   end
   
   def self.load_default_locales(path = nil)
-    puts "LOAD LOCALES: #{path ||= 'config/locales.yml'}" if verbose?
+    path ||= 'config/locales.yml'
+    puts "LOAD LOCALES: #{path}" if verbose?
     raise 'Locales file not found' unless (full_path = Rails.root + path).exist?
 
     YAML::load_file(full_path).each do |code, options|
