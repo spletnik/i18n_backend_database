@@ -140,7 +140,7 @@ class I18nUtil
   def self.synchronize_translations
     set_current_load_source(nil)
     non_default_locales = I18n::Backend::Locale.non_defaults
-    puts "CHECKING FOR MISSES - #{non_default_locales}" if verbose?
+    puts "CHECKING FOR MISSES - #{non_default_locales.collect{|locale| locale.code}}" if verbose?
     I18n::Backend::Locale.default_locale.translations.each do |t|
       non_default_locales.each do |locale|
         unless locale.translations.exists?(:key => t.key, :pluralization_index => t.pluralization_index)
@@ -219,13 +219,20 @@ class I18nUtil
       translations = Translation.where(:locale_id => locale.id).where(source_options.join(' or '))
       raise "No translations found for '#{locale.code}'" if translations.empty?
 
-      exports = []
+      exports,blank_count = [],0
       translations.each do |translation|
-        puts "...EXPORT - #{translation.raw_key} - #{translation.pluralization_index}#{' - BLANK!!' if translation.value.blank?}" if verbose?
-        exports << {'key' => translation.raw_key,'value' => translation.value,'pluralization_index' => translation.pluralization_index}
-        translation.source = current_load_source
-        translation.save!
+        if translation.value.blank?
+          blank_count += 1
+        else
+          puts "...EXPORT - #{translation.raw_key} - #{translation.pluralization_index}" if verbose?
+          exports << {'key' => translation.raw_key,'value' => translation.value,'pluralization_index' => translation.pluralization_index}
+          translation.source = current_load_source
+          translation.save!
+        end
       end
+
+      puts "#{translations.length - blank_count} IMPORTED..." if verbose?
+      puts "WARNING: #{blank_count} BLANKS FOUND!" if verbose?
 
       File.open(full_path,'w'){|file| file.write exports.to_yaml}
     end
@@ -235,14 +242,16 @@ class I18nUtil
   def self.import_translations(locale)
     puts "IMPORTING - #{locale.code}" if verbose?
     full_path = Rails.root + "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
-    raise "No translations found for '#{locale.code}'" unless full_path.exist?
+    raise "No translation file found for '#{locale.code}'" unless full_path.exist?
 
     set_current_load_source(full_path) do
       raise "No translations found for '#{locale.code}'" unless translations = YAML::load_file(full_path)
 
       translations.each do |translation|
-        create_translation(locale,translation['key'],translation['pluralization_index'],translation['value'])
+        create_translation(locale,translation['key'],translation['pluralization_index'],translation['value'].blank? ? nil : translation['value'])
       end
+
+      puts "#{translations.length} IMPORTED..." if verbose?
     end
   end
 

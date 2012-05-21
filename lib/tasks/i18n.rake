@@ -28,7 +28,7 @@ namespace :i18n do
 
   desc 'Extracts translation data from database into fixtures'
   task :export_translations => :environment do
-    locale_codes = ENV['locale'] || I18n::Backend::Locale.non_defaults.map(&:code).join(',')
+    locale_codes = ENV['locale'] ||I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
     I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale, translation_path|
       I18nUtil.export_translations(locale)
     end
@@ -36,8 +36,13 @@ namespace :i18n do
 
   desc 'Load translation data from fixtures into database for a locale'
   task :import_translations => :environment do
-    raise "Required argument: locale" unless ENV['locale']
-    I18nUtil.process_translation_locales(ENV['locale'].split(',')) do |locale|
+    raise 'Required argument: LOCALE' unless ENV['LOCALE']
+    if ENV['LOCALE'] == '*'
+      locale_codes = I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}
+    else
+      locale_codes = ENV['LOCALE'].split(',')
+    end
+    I18nUtil.process_translation_locales(locale_codes) do |locale|
       I18nUtil.import_translations(locale)
     end
   end
