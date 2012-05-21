@@ -28,24 +28,22 @@ namespace :i18n do
 
   desc 'Extracts translation data from database into fixtures'
   task :export_translations => :environment do
-    locale_codes = ENV['locale'] ||I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
-    I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale, translation_path|
+    locale_codes = ENV['LOCALE_CODES'] || I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
+    I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale|
       I18nUtil.export_translations(locale)
     end
   end
 
   desc 'Load translation data from fixtures into database for a locale'
   task :import_translations => :environment do
-    raise 'Required argument: LOCALE' unless ENV['LOCALE']
-    if ENV['LOCALE'] == '*'
-      locale_codes = I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}
-    else
-      locale_codes = ENV['LOCALE'].split(',')
-    end
-    I18nUtil.process_translation_locales(locale_codes) do |locale|
+    locale_codes = ENV['LOCALE_CODES'] || I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
+    I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale|
       I18nUtil.import_translations(locale)
     end
   end
+
+  desc 'Reset locales and translations from original sources and ready for 3rd-party translations'
+  task :reset_locales_and_translations => %w(clear_all_translations populate:load_default_locales populate:from_rails populate:from_application clear_no_source_translations populate:synchronize_translations import_translations clear_cache)
 
   namespace :populate do
     I18nUtil.verbose = ENV['VERBOSE'] == 'true'

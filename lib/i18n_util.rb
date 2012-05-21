@@ -27,11 +27,17 @@ class I18nUtil
     @@current_load_source
   end
   
-  def self.load_default_locales(path_to_file = nil)
-    path_to_file ||= File.join(File.dirname(__FILE__), "../data", "locales.yml")
-    data = YAML::load(IO.read(path_to_file))
-    data.each do |code, y|
-      I18n::Backend::Locale.create({:code => code, :name => y["name"]}) unless I18n::Backend::Locale.exists?(:code => code)
+  def self.load_default_locales(path = nil)
+    puts "LOAD LOCALES: #{path ||= 'config/locales.yml'}" if verbose?
+    raise 'Locales file not found' unless (full_path = Rails.root + path).exist?
+
+    YAML::load_file(full_path).each do |code, options|
+      if I18n::Backend::Locale.exists?(:code => code)
+        puts "...EXISTS - #{code}" if verbose?
+      else
+        puts "...CREATE - #{code} - #{options['name']}" if verbose?
+        I18n::Backend::Locale.create(:code => code, :name => options['name'])
+      end
     end
   end
   
@@ -217,7 +223,7 @@ class I18nUtil
       full_path.dirname.mkdir unless full_path.dirname.exist?
 
       translations = Translation.where(:locale_id => locale.id).where(source_options.join(' or '))
-      raise "No translations found for '#{locale.code}'" if translations.empty?
+      return puts "No translations found for '#{locale.code}'" if translations.empty?
 
       exports,blank_count = [],0
       translations.each do |translation|
@@ -242,10 +248,10 @@ class I18nUtil
   def self.import_translations(locale)
     puts "IMPORTING - #{locale.code}" if verbose?
     full_path = Rails.root + "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
-    raise "No translation file found for '#{locale.code}'" unless full_path.exist?
+    return puts "No translation file found for '#{locale.code}'" unless full_path.exist?
 
     set_current_load_source(full_path) do
-      raise "No translations found for '#{locale.code}'" unless translations = YAML::load_file(full_path)
+      return puts "No translations found for '#{locale.code}'" unless translations = YAML::load_file(full_path)
 
       translations.each do |translation|
         create_translation(locale,translation['key'],translation['pluralization_index'],translation['value'].blank? ? nil : translation['value'])
