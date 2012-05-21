@@ -18,7 +18,7 @@ class I18nUtil
   end
 
   def self.set_current_load_source(path)
-    path = path[(Rails.root.to_s.length + 1)..-1] if path.to_s.index(Rails.root.to_s) == 0
+    path = path.to_s[(Rails.root.to_s.length + 1)..-1] if path.to_s.index(Rails.root.to_s) == 0
     @@current_load_source = TranslationSource.find_by_path(path) || TranslationSource.new(:path => path) unless @@current_load_source and @@current_load_source.path == path
     if block_given?
       yield
@@ -201,14 +201,55 @@ class I18nUtil
   end
   
   def self.process_translation_locales(locales_codes, &action)
-    translation_path = Rails.root + DEFAULT_TRANSLATION_PATH
     if locales_codes.empty?
-      puts "Nothing to do."
+      puts 'Nothing to do.'
     else
       locales_codes.each do | locale_code |
-        raise "Locale '#{locale_code}' not found"  unless locale = Locale.find_by_code(locale_code)
-        action.call(locale, translation_path)
+        raise "Locale '#{locale_code}' not found"  unless locale = I18n::Backend::Locale.find_by_code(locale_code)
+        action.call(locale)
       end
     end
   end
+
+  def self.export_translations(locale)
+    puts "EXPORTING - #{locale.code}" if verbose?
+    translation_path = "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
+    source_options = ['source_id is null']
+    if previous_translations_source = TranslationSource.find_by_path(translation_path)
+      source_options << "source_id = #{previous_translations_source.id}"
+    end
+
+    set_current_load_source(full_path = Rails.root + translation_path) do
+      full_path.dirname.mkdir unless full_path.dirname.exist?
+
+      translations = Translation.where(:locale_id => locale.id).where(source_options.join(' or '))
+      raise "No translations found for '#{locale.code}'" if translations.empty?
+
+      exports = []
+      translations.each do |translation|
+        puts "...EXPORT - #{translation.raw_key} - #{translation.pluralization_index}#{' - BLANK!!' if translation.value.blank?}" if verbose?
+        exports << {'key' => translation.raw_key,'value' => translation.value,'pluralization_index' => translation.pluralization_index}
+        translation.source = current_load_source
+        translation.save!
+      end
+
+      File.open(full_path,'w'){|file| file.write exports.to_yaml}
+    end
+
+  end
+
+  def self.import_translations(locale)
+    puts "IMPORTING - #{locale.code}" if verbose?
+    full_path = Rails.root + "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
+    raise "No translations found for '#{locale.code}'" unless full_path.exist?
+
+    set_current_load_source(full_path) do
+      raise "No translations found for '#{locale.code}'" unless translations = YAML::load_file(full_path)
+
+      translations.each do |translation|
+        create_translation(locale,translation['key'],translation['pluralization_index'],translation['value'])
+      end
+    end
+  end
+
 end
