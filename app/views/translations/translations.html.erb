@@ -17,7 +17,7 @@
   <div id="<%= "translation_#{translation.class}_#{translation.id}" %>">
   <%= form_for(translation, :as => :translation, :url => locale_translation_path(@locale, translation), :remote => true) do |f| %>
     <p><%= h translation.default_locale_value || translation.raw_key %></p>
-    <p><%= f.text_field :value, :size => 128 %> <%= f.submit "Update" %></p>
+    <p><%= f.text_field :value, :size => 128 %> <%= f.submit "Update" %> <%= h "(#{translation.raw_key})" if translation.raw_key != translation.default_locale_value %></p>
   <% end %>
   </div>
   <hr/>

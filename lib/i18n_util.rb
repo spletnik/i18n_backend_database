@@ -2,6 +2,8 @@ class I18nUtil
 
   DEFAULT_TRANSLATION_PATH  = 'config/translations'
 
+  @@verbose,@@current_load_source = nil,nil
+
   def self.verbose?
     @@verbose
   end
@@ -10,15 +12,13 @@ class I18nUtil
     @@verbose = value
   end
 
-  @@current_load_source = nil
-
   def self.current_load_source(ensure_saved = true)
     @@current_load_source.save! if @@current_load_source and ensure_saved
     @@current_load_source
   end
 
   def self.set_current_load_source(path)
-    path = path[(Rails.root.to_s.length + 1)..-1] if path.to_s.index(Rails.root.to_s) == 0
+    path = path.to_s[(Rails.root.to_s.length + 1)..-1] if path.to_s.index(Rails.root.to_s) == 0
     @@current_load_source = TranslationSource.find_by_path(path) || TranslationSource.new(:path => path) unless @@current_load_source and @@current_load_source.path == path
     if block_given?
       yield
@@ -81,7 +81,7 @@ class I18nUtil
   end
 
   def self.extract_translations_from_hash(hash, parent_keys = [])
-    hash.inject([]) do |keys, (key, value)|
+    (hash || {}).inject([]) do |keys, (key, value)|
       full_key = parent_keys + [key]
       if value.is_a?(Hash)
         # Nested hash
@@ -108,12 +108,6 @@ class I18nUtil
         puts "SOURCE: #{source.path}" if verbose? and source != last_source
         set_current_load_source((last_source = source).full_path.to_s)
         I18n.t(match, options) # default locale first
-        locales = I18n::Backend::Locale.available_locales
-        locales.delete(I18n.default_locale)
-        # translate for other locales
-        locales.each do |locale|
-          I18n.t(match, options.merge(:locale => locale))
-        end
       rescue
         puts "WARNING:#{$!} SOURCE:#{source && source.path} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
         $@.each{|line| puts line}
@@ -146,7 +140,7 @@ class I18nUtil
   def self.synchronize_translations
     set_current_load_source(nil)
     non_default_locales = I18n::Backend::Locale.non_defaults
-    puts "CHECKING FOR MISSES - #{non_default_locales}" if verbose?
+    puts "CHECKING FOR MISSES - #{non_default_locales.collect{|locale| locale.code}}" if verbose?
     I18n::Backend::Locale.default_locale.translations.each do |t|
       non_default_locales.each do |locale|
         unless locale.translations.exists?(:key => t.key, :pluralization_index => t.pluralization_index)
@@ -201,14 +195,64 @@ class I18nUtil
   end
   
   def self.process_translation_locales(locales_codes, &action)
-    translation_path = Rails.root + DEFAULT_TRANSLATION_PATH
     if locales_codes.empty?
-      puts "Nothing to do."
+      puts 'Nothing to do.'
     else
       locales_codes.each do | locale_code |
-        raise "Locale '#{locale_code}' not found"  unless locale = Locale.find_by_code(locale_code)
-        action.call(locale, translation_path)
+        raise "Locale '#{locale_code}' not found"  unless locale = I18n::Backend::Locale.find_by_code(locale_code)
+        action.call(locale)
       end
     end
   end
+
+  def self.export_translations(locale)
+    puts "EXPORTING - #{locale.code}" if verbose?
+    translation_path = "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
+    source_options = ['source_id is null']
+    if previous_translations_source = TranslationSource.find_by_path(translation_path)
+      source_options << "source_id = #{previous_translations_source.id}"
+    end
+
+    set_current_load_source(full_path = Rails.root + translation_path) do
+      full_path.dirname.mkdir unless full_path.dirname.exist?
+
+      translations = Translation.where(:locale_id => locale.id).where(source_options.join(' or '))
+      raise "No translations found for '#{locale.code}'" if translations.empty?
+
+      exports,blank_count = [],0
+      translations.each do |translation|
+        if translation.value.blank?
+          blank_count += 1
+        else
+          puts "...EXPORT - #{translation.raw_key} - #{translation.pluralization_index}" if verbose?
+          exports << {'key' => translation.raw_key,'value' => translation.value,'pluralization_index' => translation.pluralization_index}
+          translation.source = current_load_source
+          translation.save!
+        end
+      end
+
+      puts "#{translations.length - blank_count} IMPORTED..." if verbose?
+      puts "WARNING: #{blank_count} BLANKS FOUND!" if verbose?
+
+      File.open(full_path,'w'){|file| file.write exports.to_yaml}
+    end
+
+  end
+
+  def self.import_translations(locale)
+    puts "IMPORTING - #{locale.code}" if verbose?
+    full_path = Rails.root + "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
+    raise "No translation file found for '#{locale.code}'" unless full_path.exist?
+
+    set_current_load_source(full_path) do
+      raise "No translations found for '#{locale.code}'" unless translations = YAML::load_file(full_path)
+
+      translations.each do |translation|
+        create_translation(locale,translation['key'],translation['pluralization_index'],translation['value'].blank? ? nil : translation['value'])
+      end
+
+      puts "#{translations.length} IMPORTED..." if verbose?
+    end
+  end
+
 end

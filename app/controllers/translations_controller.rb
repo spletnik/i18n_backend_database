@@ -98,6 +98,9 @@ class TranslationsController < ActionController::Base
     @translation  = @locale.translations.find(params[:id])
     @first_time_translating = @translation.value.nil?
     respond_to do |format|
+      params[:translation] ||= {}
+      params[:translation][:source_id] = nil
+      params[:translation][:value] = nil if params[:translation][:value].blank?
       if @translation.update_attributes(params[:translation])
         format.html do
           flash[:notice] = 'Translation was successfully updated.'

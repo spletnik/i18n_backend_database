@@ -4,6 +4,12 @@ namespace :i18n do
     I18n.backend.cache_store.clear
   end
 
+  desc 'Clear all translations'
+  task :clear_all_translations => :environment do
+    puts "REMOVING #{Translation.count}" if I18nUtil.verbose?
+    Translation.delete_all
+  end
+
   desc 'Clear translations that have no source'
   task :clear_no_source_translations => :environment do
     puts "REMOVING #{Translation.count(:conditions => {:source_id => nil})}" if I18nUtil.verbose?
@@ -22,34 +28,22 @@ namespace :i18n do
 
   desc 'Extracts translation data from database into fixtures'
   task :export_translations => :environment do
-    locale_codes = ENV['locale'] || I18n::Backend::Locale.all.map(&:code).join(',')
+    locale_codes = ENV['locale'] ||I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
     I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale, translation_path|
-      translations = Translation.all :conditions => {:locale_id => locale.id}, :select => 'raw_key as `key`, value, pluralization_index'
-      raise "No translations found for '#{locale.code}'" if translations.empty?
-      puts "Export #{translations.length} translations for '#{locale.code}'..."
-      FileUtils.mkpath(translation_path)
-      File.open(translation_path + "#{locale.code}.yml",'w'){|file| file.write translations.collect{|entry| entry.attributes}.to_yaml}
+      I18nUtil.export_translations(locale)
     end
   end
 
   desc 'Load translation data from fixtures into database for a locale'
   task :import_translations => :environment do
-    raise "Required argument: locale" unless ENV['locale']
-    Rake::Task["i18n:clear_cache"].invoke
-    I18nUtil.process_translation_locales(ENV['locale'].split(',')) do |locale, translation_path|
-      translation_file = translation_path + "#{locale.code}.yml"
-      raise "No translation file exists for '#{locale.code}' at #{translation_file}" unless File.exist?(translation_file)
-      raise "No translations found for '#{locale.code}'" unless (translations = YAML::load_file(translation_file))
-      puts "Importing #{translations.length} translations for '#{locale.code}'..."
-      Translation.delete_all(:locale_id => locale.id)
-      translations.each do |translation|
-        Translation.create!(
-          :key => translation['key'],
-          :value => translation['value'],
-          :pluralization_index => translation['pluralization_index'],
-          :locale_id => locale.id
-        )
-      end
+    raise 'Required argument: LOCALE' unless ENV['LOCALE']
+    if ENV['LOCALE'] == '*'
+      locale_codes = I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}
+    else
+      locale_codes = ENV['LOCALE'].split(',')
+    end
+    I18nUtil.process_translation_locales(locale_codes) do |locale|
+      I18nUtil.import_translations(locale)
     end
   end
 
