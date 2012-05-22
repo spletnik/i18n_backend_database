@@ -116,8 +116,7 @@ class I18nUtil
         set_current_load_source((last_source = source).full_path.to_s)
         I18n.t(match, options) # default locale first
       rescue
-        puts "WARNING:#{$!} SOURCE:#{source && source.path} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
-        $@.each{|line| puts line}
+        puts "WARNING:#{$!} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
       end
 
     end
