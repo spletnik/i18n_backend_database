@@ -42,7 +42,7 @@ module I18n::Backend
       locale_in_context(locale)
 
       options[:scope] = [options[:scope]] unless options[:scope].is_a?(Array) || options[:scope].blank?
-      key = "#{options[:scope].join('.')}.#{key}".to_sym if options[:scope] && key.is_a?(Symbol)
+      key = "#{options[:scope].join('.')}.#{key}".to_sym if options[:scope]
       count = options[:count]
       # pull out values for interpolation
       values = options.reject { |name, value| [:scope, :default].include?(name) }
