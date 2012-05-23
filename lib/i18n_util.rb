@@ -107,6 +107,7 @@ class I18nUtil
     last_source = nil
     translated_objects(dir).each do |match,source|
       next unless match = [/'(.*?)'/,/"(.*?)"/,/\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length,nil]}.sort.first.last
+      next if I18n::Backend::Locale.default_locale.translations.find_by_key_and_pluralization_index(Translation.hk(match),1)
 
       begin
         interpolation_arguments= match.scan(/\%\{(.*?)\}/).flatten
