@@ -7,7 +7,8 @@ class Translation < ActiveRecord::Base
   after_update :update_cache
 
   scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
-  scope :translated, :conditions => "value IS NOT NULL", :order => :raw_key
+  scope :unsourced, :conditions => {:source_id => nil}, :order => :raw_key
+  scope :translated, :conditions => 'value IS NOT NULL', :order => :raw_key
 
   def default_locale_value(rescue_value = 'No default locale value')
     begin

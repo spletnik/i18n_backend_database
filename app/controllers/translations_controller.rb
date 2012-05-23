@@ -20,10 +20,13 @@ class TranslationsController < ActionController::Base
   def translations
     @locale ||= I18n::Backend::Locale.default_locale
     @translation_option = TranslationOption.find(params[:translation_option])
-    if @translation_option == TranslationOption.translated
-      @translations = @locale.translations.translated
-    else
-      @translations = @locale.translations.untranslated
+    case @translation_option
+      when TranslationOption.translated
+        @translations = @locale.translations.translated
+      when TranslationOption.unsourced
+        @translations = @locale.translations.unsourced
+      else
+        @translations = @locale.translations.untranslated
     end
     respond_to do |format|
       format.html # index.html.erb
@@ -39,10 +42,11 @@ class TranslationsController < ActionController::Base
     @asset_translations  = I18n.asset_translations
     @untranslated_assets = I18n.untranslated_assets(@locale.code)
     @percentage_translated = (((@asset_translations.size - @untranslated_assets.size).to_f / @asset_translations.size.to_f * 100).round) rescue 0
-    if @translation_option == TranslationOption.translated
-      @asset_translations = @asset_translations.reject{|e| @untranslated_assets.include?(e)}
-    else
-      @asset_translations = @untranslated_assets
+    case @translation_option
+      when TranslationOption.translated
+        @asset_translations = @asset_translations.reject{|e| @untranslated_assets.include?(e)}
+      else
+        @asset_translations = @untranslated_assets
     end
     respond_to do |format|
       format.html # index.html.erb
