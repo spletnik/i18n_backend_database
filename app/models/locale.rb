@@ -10,7 +10,7 @@ module I18n::Backend
     # scope :in_city, lambda { |m| { return {} if m.nil?; :joins => [cities], :conditions => "cities.name = '#{m}' } }
     
     def self.default_locale
-      @@default_locale ||= self.find(:first, :conditions => {:code => I18n.default_locale.to_s})
+      @@default_locale ||= where(:code => I18n.default_locale.to_s).first
     end
 
     def self.reset_default_locale
@@ -18,7 +18,7 @@ module I18n::Backend
     end
 
     def translation_from_key(key)
-      self.translations.find(:first, :conditions => {:key => Translation.hk(key)})
+      self.translations.where(:key => Translation.hk(key)).first
     end
 
     def create_translation(key, value, pluralization_index=1)
