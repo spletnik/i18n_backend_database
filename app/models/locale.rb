@@ -10,7 +10,7 @@ module I18n::Backend
     # scope :in_city, lambda { |m| { return {} if m.nil?; :joins => [cities], :conditions => "cities.name = '#{m}' } }
     
     def self.default_locale
-      @@default_locale ||= self.find(:first, :conditions => {:code => I18n.default_locale.to_s})
+      @@default_locale ||= where(:code => I18n.default_locale.to_s).first
     end
 
     def self.reset_default_locale
@@ -18,13 +18,13 @@ module I18n::Backend
     end
 
     def translation_from_key(key)
-      self.translations.find(:first, :conditions => {:key => Translation.hk(key)})
+      self.translations.where(:key => Translation.hk(key)).first
     end
 
     def create_translation(key, value, pluralization_index=1)
       conditions = {:key => key, :raw_key => key.to_s, :pluralization_index => pluralization_index}
 
-      conditions[:source_id] = I18nUtil.current_load_source.to_param if attribute_names.include?(:source_id) # TODO does this NEED to happen? occurs when adding "source_id" migration to legacy installs
+      conditions[:source_id] = I18nUtil.current_load_source.to_param if Translation.column_names.include?('source_id') # TODO does this NEED to happen? occurs when adding "source_id" migration to legacy installs
 
       # set the key as the value if we're using the default locale and the key is a string
       conditions.merge!({:value => value}) if (self.code == I18n.default_locale.to_s && key.is_a?(String))
