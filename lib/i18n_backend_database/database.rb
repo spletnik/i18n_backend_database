@@ -55,11 +55,12 @@ module I18n::Backend
         entry = use_and_copy_default_locale_translations_if_they_exist(@locale, key)
       end
 
+      # TODO revisit this code -- for now consider the first non-Symbol default as the value
       # if we have no entry and some defaults ... start looking them up
-      unless entry || key.is_a?(String) || options[:default].blank?
-        default = options[:default].is_a?(Array) ? options[:default].shift : options.delete(:default)
-        return translate(@locale.code, default, options.dup)
-      end
+      #unless entry || key.is_a?(String) || options[:default].blank?
+      #  default = options[:default].is_a?(Array) ? options[:default].shift : options.delete(:default)
+      #  return translate(@locale.code, default, options.dup)
+      #end
 
       # this needs to be folded into the above at some point.
       # this handles the case where the default of the string key is a space
@@ -77,7 +78,7 @@ module I18n::Backend
         escaped_key = key.to_s.gsub('\\', '\\\\\\\\').gsub(/%/, '\%')
         # Only taking those translations that in which the beggining of the raw_key is EXACTLY like the given case. This means it's not case sensitive.
         # This allows to use Number as a normal key and number.whatever.whatever.. as the scoped key.
-        children = @locale.translations.where(["raw_key like ?", "#{escaped_key}.%"]).select{|child| child.raw_key.index(/#{escaped_key}/) == 0}
+        children = @locale.translations.where(["raw_key like ?", "#{escaped_key}.%"]).select{|child| child.raw_key.starts_with?(key.to_s)}
         if children.size > 0
           entry = hashify_record_array(key.to_s, children)
           @cache_store.write(Translation.ck(@locale, key), entry) unless cache_lookup == true
@@ -91,8 +92,13 @@ module I18n::Backend
         pluralization_index = (options[:count].nil? || options[:count] == 1) ? 1 : 0
         key = key.to_s
         key.gsub!('.one', '') if key.ends_with?('.one')
-        translation =  @locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) ||
-                       @locale.create_translation(key, key, pluralization_index)
+        if (translation = @locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index)) and not translation.raw_key.starts_with?(key.to_s)
+          translation = nil
+        end
+        unless translation
+          first_string_default = Array(options[:default]).detect{|option| option.is_a?(String)}
+          translation = @locale.create_translation(key, first_string_default || key, pluralization_index)
+        end
         entry = translation.value_or_default
       end
 
@@ -162,7 +168,7 @@ module I18n::Backend
       if @cache_store.exist?(cache_key) && value = @cache_store.read(cache_key)
         return value
       else
-        translations = locale.translations.find_all_by_key(Translation.hk(key))
+        translations = locale.translations.find_all_by_key(Translation.hk(key)).select{|translation| translation.raw_key.starts_with?(key.to_s)}
         case translations.size
         when 0
           value = nil
