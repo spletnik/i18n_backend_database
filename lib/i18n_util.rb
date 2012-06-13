@@ -33,11 +33,16 @@ class I18nUtil
     raise 'Locales file not found' unless (full_path = Rails.root + path).exist?
 
     YAML::load_file(full_path).each do |code, options|
-      if I18n::Backend::Locale.exists?(:code => code)
-        puts "...EXISTS - #{code}" if verbose?
+      raise "name for locale code #{code} is blank!" if (name = options['name']).blank?
+
+      if (locale = I18n::Backend::Locale.where(:code => code).first).nil?
+        puts "...CREATE - #{code} - #{name}" if verbose?
+        I18n::Backend::Locale.create!(:code => code, :name => name)
+      elsif locale.name == name
+        puts "...EXISTS - #{code} - #{name}" if verbose?
       else
-        puts "...CREATE - #{code} - #{options['name']}" if verbose?
-        I18n::Backend::Locale.create(:code => code, :name => options['name'])
+        puts "...UPDATE - #{code} - #{name}" if verbose?
+        locale.update_attributes!(:name => name)
       end
     end
   end
