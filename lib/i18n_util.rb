@@ -151,16 +151,19 @@ class I18nUtil
   end
 
   # Populate translation records from the default locale to other locales if no record exists.
-  def self.synchronize_translations
+  def self.synchronize_translations(exclusions)
+    exclusions = exclusions.collect{|pattern| Regexp.new(pattern)}
     set_current_load_source(nil)
     non_default_locales = I18n::Backend::Locale.non_defaults
     puts "CHECKING FOR MISSES - #{non_default_locales.collect{|locale| locale.code}}" if verbose?
-    I18n::Backend::Locale.default_locale.translations.each do |t|
+    I18n::Backend::Locale.default_locale.translations.each do |translation|
+      next if exclusions.detect{|pattern| translation.raw_key =~ pattern}
+
       non_default_locales.each do |locale|
-        unless locale.translations.exists?(:key => t.key, :pluralization_index => t.pluralization_index)
-          value = t.value =~ /^---(.*)\n/ ? t.value : nil # well will copy across YAML, like symbols
-          locale.translations.create!(:key => t.raw_key, :value => value, :pluralization_index => t.pluralization_index)
-          puts "...MISSING #{locale.code} : #{t.raw_key} : #{t.pluralization_index}" if verbose?
+        unless locale.translations.exists?(:key => translation.key, :pluralization_index => translation.pluralization_index)
+          value = translation.value =~ /^---(.*)\n/ ? translation.value : nil # well will copy across YAML, like symbols
+          locale.translations.create!(:key => translation.raw_key, :value => value, :pluralization_index => translation.pluralization_index)
+          puts "...MISSING #{locale.code} : #{translation.raw_key} : #{translation.pluralization_index}" if verbose?
         end
       end
     end
