@@ -64,7 +64,7 @@ namespace :i18n do
 
     desc 'Create translation records from all default locale translations if none exists.'
     task :synchronize_translations => :environment do
-      I18nUtil.synchronize_translations
+      I18nUtil.synchronize_translations((ENV['SYNC_EXCLUDE'] || '').split(','))
     end
 
     desc 'Populate default locales'
