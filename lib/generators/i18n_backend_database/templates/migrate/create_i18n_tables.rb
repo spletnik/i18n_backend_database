@@ -1,5 +1,5 @@
 class CreateI18nTables < ActiveRecord::Migration
-  def self.up
+  def up
     create_table :locales do |t|
       t.string   :code
       t.string   :name
@@ -22,7 +22,7 @@ class CreateI18nTables < ActiveRecord::Migration
 
   end
 
-  def self.down
+  def down
     drop_table :locales
     drop_table :translations
     drop_table :translation_sources
