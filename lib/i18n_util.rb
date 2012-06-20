@@ -251,7 +251,7 @@ class I18nUtil
       puts "#{translations.length - blank_count} EXPORTED..." if verbose?
       puts "WARNING: #{blank_count} BLANKS FOUND!" if verbose?
 
-
+      `cp #{full_path} #{full_path}.bak-#{Time.now.strftime('%Y%m%d%H%M%S')}` if File.exists?(full_path)
       File.open(full_path,'w'){|file| file.write exports.to_yaml}
     end
 
