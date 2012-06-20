@@ -23,8 +23,6 @@ require 'i18n_backend_database'
 
 I18n.backend = I18n::Backend::Database.new
 
-puts I18n::Backend::Locale.first.inspect
-
 RSpec.configure do |config|
   config.use_transactional_fixtures = false
   config.use_instantiated_fixtures  = false
