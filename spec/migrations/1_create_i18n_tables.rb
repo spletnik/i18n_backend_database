@@ -1,0 +1,1 @@
+load File.dirname(__FILE__) + '/../../lib/generators/i18n_backend_database/templates/migrate/create_i18n_tables.rb'
