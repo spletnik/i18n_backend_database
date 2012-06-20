@@ -5,9 +5,9 @@ describe I18n::Backend::Database do
     before {
       I18n.locale = "es"
       @locales    = [:en, :es, :it]
-      @locale     = mock_model(Locale, { :code => "es" })
-      Locale.stub!(:available_locales).and_return(@locales)
-      Locale.stub!(:find_by_code).and_return(@locale)
+      @locale     = mock_model(I18n::Backend::Locale, { :code => "es" })
+      I18n::Backend::Locale.stub!(:available_locales).and_return(@locales)
+      I18n::Backend::Locale.stub!(:find_by_code).and_return(@locale)
       @database   = I18n::Backend::Database.new
     }
 
@@ -29,8 +29,8 @@ describe I18n::Backend::Database do
       @database.localize_text_tag.should == '##'
     end
 
-    it "should delegate the call to available_locales to the Locale class" do
-      Locale.should_receive(:available_locales)
+    it "should delegate the call to available_locales to the I18n::Backend::Locale class" do
+      I18n::Backend::Locale.should_receive(:available_locales)
       @database.available_locales
     end
 
@@ -62,35 +62,35 @@ describe I18n::Backend::Database do
   # describe "omg an aminal" do
   #   
   #   before(:each) do
-  #     Locale.instance_variable_set("@validate_callbacks", ActiveSupport::Callbacks::CallbackChain.new)
-  #     Locale.create!(:code => "en")
+  #     I18n::Backend::Locale.instance_variable_set("@validate_callbacks", ActiveSupport::Callbacks::CallbackChain.new)
+  #     I18n::Backend::Locale.find_or_create!(:code => "en")
   #   end
   #   
   #   it "should contain one 'blank' key in the database" do
-  #     Locale.validates_presence_of :code
-  #     l = Locale.new
+  #     I18n::Backend::Locale.validates_presence_of :code
+  #     l = I18n::Backend::Locale.new
   #     l.valid?
   #     Translation.find_by_value("can't be blank").should_not be_nil
   #   end
   # 
   #   it "should contain one 'blank' key and one custom 'blank' key in the database" do
-  #     Locale.validates_presence_of :code, :message => "ain't blank sucka"
-  #     l = Locale.new
+  #     I18n::Backend::Locale.validates_presence_of :code, :message => "ain't blank sucka"
+  #     l = I18n::Backend::Locale.new
   #     l.valid?
   #     Translation.find_by_value("ain't blank sucka").should_not be_nil
   #     Translation.find_by_value("can't be blank").should be_nil
   #   end
   # 
   #   it "should use the blank code if a custom code is present, but not enabled" do
-  #     Locale.validates_presence_of :code, :message => "ain't blank sucka"
+  #     I18n::Backend::Locale.validates_presence_of :code, :message => "ain't blank sucka"
   # 
-  #     l = Locale.new
+  #     l = I18n::Backend::Locale.new
   #     l.valid?
   #     l.errors_on(:code).should include("ain't blank sucka")
   # 
-  #     Locale.validates_presence_of :code
+  #     I18n::Backend::Locale.validates_presence_of :code
   # 
-  #     l = Locale.new
+  #     l = I18n::Backend::Locale.new
   #     l.valid?
   #     l.errors_on(:code).should include("can't be blank")
   #   end
@@ -101,7 +101,7 @@ describe I18n::Backend::Database do
       before {
         I18n.locale = "en"
         I18n.default_locale = "en"
-        Locale.create({:code => "en", :name => "English"})
+        I18n::Backend::Locale.create({:code => "en", :name => "English"})
         @database = I18n::Backend::Database.new
         @database.translate(:en, "dog")
       }
@@ -115,8 +115,8 @@ describe I18n::Backend::Database do
       before {
         I18n.locale = "es"
         I18n.default_locale = "en"
-        Locale.create({:code => "en", :name => "English"})
-        Locale.create({:code => "es", :name => "Spanish"})
+        I18n::Backend::Locale.create({:code => "en", :name => "English"})
+        I18n::Backend::Locale.create({:code => "es", :name => "Spanish"})
         @database = I18n::Backend::Database.new
         @database.translate(:es, "dog")
       }
@@ -130,29 +130,29 @@ describe I18n::Backend::Database do
   describe "setting a locale in context" do
     before {
       I18n.locale = "es"
-      @locale     = mock_model(Locale, { :code => "es" })
+      @locale     = mock_model(I18n::Backend::Locale, { :code => "es" })
       @database   = I18n::Backend::Database.new
     }
 
     describe "on a new instance when the cache locale is nil" do
       before {
-        Locale.stub!(:find_by_code).and_return(@locale)
+        I18n::Backend::Locale.stub!(:find_by_code).and_return(@locale)
       }
 
       it "should return a locale record for the current locale in context" do
-        Locale.should_receive(:find_by_code).with(I18n.locale)
+        I18n::Backend::Locale.should_receive(:find_by_code).with(I18n.locale)
         @database.send(:locale_in_context, I18n.locale)
       end
     end
 
     describe "when passing in a temporary locale that's different from the local cache" do
       before {
-        Locale.stub!(:find_by_code).with("it").and_return(@locale)
+        I18n::Backend::Locale.stub!(:find_by_code).with("it").and_return(@locale)
         @database.locale = "it"
       }
 
       it "should return a locale record for the temporary locale" do
-        Locale.should_receive(:find_by_code).with("it")
+        I18n::Backend::Locale.should_receive(:find_by_code).with("it")
         @database.send(:locale_in_context, "it")
       end
 
@@ -163,7 +163,7 @@ describe I18n::Backend::Database do
 
     describe "when passing in a temporary locale that's the same as the local cache" do
       before {
-        Locale.stub!(:find_by_code).with("es").and_return(@locale)
+        I18n::Backend::Locale.stub!(:find_by_code).with("es").and_return(@locale)
         @database.locale = "es"
       }
 
@@ -174,7 +174,7 @@ describe I18n::Backend::Database do
 
     describe "when the locale is the same as the cache" do
       before {
-        Locale.stub!(:find_by_code).with("es").and_return(@locale)
+        I18n::Backend::Locale.stub!(:find_by_code).with("es").and_return(@locale)
       }
 
       it "should update the locale cache with the new locale" do
@@ -185,13 +185,13 @@ describe I18n::Backend::Database do
 
     describe "when the locale is different than the cache" do
       before {
-        Locale.stub!(:find_by_code).with("es").and_return(@locale)
+        I18n::Backend::Locale.stub!(:find_by_code).with("es").and_return(@locale)
         I18n.locale = "it"
       }
 
       it "should update the locale cache with the new locale" do
         @database.locale = "es"
-        Locale.should_receive(:find_by_code).with("it")
+        I18n::Backend::Locale.should_receive(:find_by_code).with("it")
         @database.send(:locale_in_context, "it")
       end
     end

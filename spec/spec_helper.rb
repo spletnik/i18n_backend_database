@@ -1,17 +1,32 @@
+ENV['RAILS_ENV'] = 'test'
+
 require 'active_record'
 require 'action_view'
 require 'action_controller'
 require 'rspec/rails'
 require 'rails'
+
+ActiveRecord::Base.establish_connection(:adapter  => 'sqlite3',:database => ':memory')
+ActiveRecord::Migrator.up File.dirname(__FILE__) + '/migrations'
+
+class Application < Rails::Application
+end
+
+Application.configure do
+  config.cache_store = :memory_store
+  config.active_support.deprecation = :log
+end
+
+Application.initialize!
+
 require 'i18n_backend_database'
 
-ActiveRecord::Base.establish_connection(:adapter  => 'sqlite3',:database => ':memory:')
-load 'generators/i18n_backend_database/templates/migrate/create_i18n_tables.rb'
-CreateI18nTables.up
-I18n.backend = I18n::Backend::Database.new(:cache_store => :memory_store)
+I18n.backend = I18n::Backend::Database.new
 
-RSpec.configure  do |config|
-  config.use_transactional_fixtures = true
+puts I18n::Backend::Locale.first.inspect
+
+RSpec.configure do |config|
+  config.use_transactional_fixtures = false
   config.use_instantiated_fixtures  = false
 
   config.after(:each) do

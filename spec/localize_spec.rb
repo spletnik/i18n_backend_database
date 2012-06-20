@@ -58,7 +58,7 @@ describe I18n::Backend::Database do
     describe "and locale es" do
       before(:each) do
         I18n.locale = "es"
-        @spanish_locale = Locale.create!(:code => 'es')
+        @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => 'es')
       end
 
     end

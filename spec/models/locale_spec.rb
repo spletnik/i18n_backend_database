@@ -9,7 +9,7 @@ describe I18n::Backend::Locale do
   end
 
   it "should create a new instance given valid attributes" do
-    I18n::Backend::Locale.create!(@valid_attributes)
+    I18n::Backend::Locale.find_or_create!(@valid_attributes)
   end
 
   it "should return code as to_param" do
@@ -17,7 +17,7 @@ describe I18n::Backend::Locale do
   end
 
   it "should be invalid with no code" do
-    I18n::Backend::Locale.create!(:code => "en")
+    I18n::Backend::Locale.find_or_create!(:code => "en")
     locale = I18n::Backend::Locale.new
     locale.should_not be_valid
   end
@@ -28,8 +28,8 @@ describe "English and Spanish I18n::Backend::Locales with I18n default locale se
   before(:each) do
     I18n.default_locale = "en"
     I18n::Backend::Locale.delete_all
-    @english_locale = I18n::Backend::Locale.create!(:code => "en")
-    @spanish_locale = I18n::Backend::Locale.create!(:code => "es")
+    @english_locale = I18n::Backend::Locale.find_or_create!(:code => "en")
+    @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => "es")
   end
 
   it "should create a translated translation using english locale" do
@@ -49,7 +49,7 @@ describe "English and Spanish I18n::Backend::Locales with I18n default locale se
   end
 
   it "should return list of non-default locales" do
-    @geek_locale = I18n::Backend::Locale.create!(:code => "gk")
+    @geek_locale = I18n::Backend::Locale.find_or_create!(:code => "gk")
     I18n::Backend::Locale.non_defaults.should include(@spanish_locale)
     I18n::Backend::Locale.non_defaults.should include(@geek_locale)
     I18n::Backend::Locale.non_defaults.should_not include(@english_locale)
@@ -86,8 +86,8 @@ describe "I18n::Backend::Locale with translations" do
   before(:each) do
     I18n.default_locale = "en"
     I18n::Backend::Locale.delete_all
-    @english_locale = I18n::Backend::Locale.create!(:code => "en")
-    @spanish_locale = I18n::Backend::Locale.create!(:code => "es")
+    @english_locale = I18n::Backend::Locale.find_or_create!(:code => "en")
+    @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => "es")
 
     @spanish_locale.translations.create!(:key => 'key1', :value => 'translated1')
     @spanish_locale.translations.create!(:key => 'key2', :value => 'translated2')
