@@ -6,7 +6,7 @@ require 'action_controller'
 require 'rspec/rails'
 require 'rails'
 
-ActiveRecord::Base.establish_connection(:adapter  => 'sqlite3',:database => ':memory')
+ActiveRecord::Base.establish_connection(:adapter  => 'sqlite3',:database => ':memory:')
 ActiveRecord::Migrator.up File.dirname(__FILE__) + '/migrations'
 
 class Application < Rails::Application
