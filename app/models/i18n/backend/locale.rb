@@ -17,6 +17,11 @@ module I18n::Backend
       @@default_locale = nil
     end
 
+    def self.find_or_create!(params)
+      code = params.kind_of?(Hash) ? params[:code] : params.to_s
+      where(:code => code).first || create!(:code => code)
+    end
+
     def translation_from_key(key)
       self.translations.where(:key => Translation.hk(key)).first
     end
