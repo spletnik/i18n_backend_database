@@ -13,11 +13,12 @@ describe Translation do
   end
 end
 
-describe "English and Spanish Locales with I18n default locale set to English" do
+describe "English and Spanish I18n::Backend::Locales with I18n default locale set to English" do
   before(:each) do
     I18n.default_locale = "en"
-    @english_locale = Locale.create!(:code => "en")
-    @spanish_locale = Locale.create!(:code => "es")
+    I18n::Backend::Locale.delete_all
+    @english_locale = I18n::Backend::Locale.create!(:code => "en")
+    @spanish_locale = I18n::Backend::Locale.create!(:code => "es")
   end
 
   describe "with no English translation" do

@@ -12,7 +12,7 @@ describe I18n::Backend::Database do
   describe "with default locale en" do
     before(:each) do
       I18n.default_locale = "en"
-      @english_locale = Locale.create!(:code => "en")
+      @english_locale = I18n::Backend::Locale.find_or_create!(:code => "en")
     end
 
     describe "and locale en" do
@@ -63,7 +63,7 @@ describe I18n::Backend::Database do
     describe "and locale es" do
       before(:each) do
         I18n.locale = "es"
-        @spanish_locale = Locale.create!(:code => 'es')
+        @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => 'es')
       end
 
       it "should localize tagged text" do

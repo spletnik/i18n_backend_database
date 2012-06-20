@@ -13,7 +13,7 @@ describe I18n::Backend::Database do
   describe "with default locale en" do
     before(:each) do
       I18n.default_locale = "en"
-      @english_locale = Locale.create!(:code => "en")
+      @english_locale = I18n::Backend::Locale.find_or_create!(:code => "en")
     end
 
     describe "and locale en" do
@@ -24,7 +24,7 @@ describe I18n::Backend::Database do
       it "should cache translations" do
         @english_locale.translations.create!(:key => 'activerecord.errors.messages.blank', :value => 'is blank moron!')
 
-        options = {:attribute=>"Locale", :value=>nil, 
+        options = {:attribute=>"I18n::Backend::Locale", :value=>nil,
           :scope=>[:activerecord, :errors], :default=>[:"models.translation.blank", :"messages.blank"], :model=>"Translation"}
 
         @backend.translate("en", :"models.translation.attributes.locale.blank", options).should == "is blank moron!"
@@ -55,13 +55,13 @@ describe I18n::Backend::Database do
     describe "and locale es" do
       before(:each) do
         I18n.locale = "es"
-        @spanish_locale = Locale.create!(:code => 'es')
+        @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => 'es')
       end
 
       it "should cache translations" do
         @english_locale.translations.create!(:key => 'activerecord.errors.messages.blank', :value => 'is blank moron!')
 
-        options = {:attribute=>"Locale", :value=>nil, 
+        options = {:attribute=>"I18n::Backend::Locale", :value=>nil,
           :scope=>[:activerecord, :errors], :default=>[:"models.translation.blank", :"messages.blank"], :model=>"Translation"}
 
         @backend.translate("es", :"models.translation.attributes.locale.blank", options).should == "is blank moron!"

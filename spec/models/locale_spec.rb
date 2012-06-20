@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe Locale do
+describe I18n::Backend::Locale do
   before(:each) do
     @valid_attributes = {
       :code => "en",
@@ -9,26 +9,27 @@ describe Locale do
   end
 
   it "should create a new instance given valid attributes" do
-    Locale.create!(@valid_attributes)
+    I18n::Backend::Locale.find_or_create!(@valid_attributes)
   end
 
   it "should return code as to_param" do
-    Locale.new(@valid_attributes).to_param.should == 'en'
+    I18n::Backend::Locale.new(@valid_attributes).to_param.should == 'en'
   end
 
   it "should be invalid with no code" do
-    Locale.create!(:code => "en")
-    locale = Locale.new
+    I18n::Backend::Locale.find_or_create!(:code => "en")
+    locale = I18n::Backend::Locale.new
     locale.should_not be_valid
   end
 end
 
 
-describe "English and Spanish Locales with I18n default locale set to English" do
+describe "English and Spanish I18n::Backend::Locales with I18n default locale set to English" do
   before(:each) do
     I18n.default_locale = "en"
-    @english_locale = Locale.create!(:code => "en")
-    @spanish_locale = Locale.create!(:code => "es")
+    I18n::Backend::Locale.delete_all
+    @english_locale = I18n::Backend::Locale.find_or_create!(:code => "en")
+    @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => "es")
   end
 
   it "should create a translated translation using english locale" do
@@ -44,14 +45,14 @@ describe "English and Spanish Locales with I18n default locale set to English" d
   end
 
   it "should return default locale of English" do
-    Locale.default_locale.should == @english_locale
+    I18n::Backend::Locale.default_locale.should == @english_locale
   end
 
   it "should return list of non-default locales" do
-    @geek_locale = Locale.create!(:code => "gk")
-    Locale.non_defaults.should include(@spanish_locale)
-    Locale.non_defaults.should include(@geek_locale)
-    Locale.non_defaults.should_not include(@english_locale)
+    @geek_locale = I18n::Backend::Locale.find_or_create!(:code => "gk")
+    I18n::Backend::Locale.non_defaults.should include(@spanish_locale)
+    I18n::Backend::Locale.non_defaults.should include(@geek_locale)
+    I18n::Backend::Locale.non_defaults.should_not include(@english_locale)
   end
 
   it "should know that the english_locale is the default" do
@@ -81,11 +82,12 @@ describe "English and Spanish Locales with I18n default locale set to English" d
 
 end
 
-describe "Locale with translations" do
+describe "I18n::Backend::Locale with translations" do
   before(:each) do
     I18n.default_locale = "en"
-    @english_locale = Locale.create!(:code => "en")
-    @spanish_locale = Locale.create!(:code => "es")
+    I18n::Backend::Locale.delete_all
+    @english_locale = I18n::Backend::Locale.find_or_create!(:code => "en")
+    @spanish_locale = I18n::Backend::Locale.find_or_create!(:code => "es")
 
     @spanish_locale.translations.create!(:key => 'key1', :value => 'translated1')
     @spanish_locale.translations.create!(:key => 'key2', :value => 'translated2')
