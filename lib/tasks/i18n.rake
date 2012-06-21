@@ -50,9 +50,10 @@ namespace :i18n do
 
     desc 'Populate the locales and translations tables from all Rails Locale YAML files. Can set LOCALE_YAML_FILES to comma separated list of files to overide'
     task :from_rails => :environment do
+      exclusions = (ENV['RAILS_EXCLUDE'] || '').split(',').collect{|pattern| Regexp.new(pattern)}
       yaml_files = (ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path).select{|path| path =~ /\.yml$/}
       yaml_files.each do |file|
-        I18nUtil.load_from_yml file
+        I18nUtil.load_from_yml file unless exclusions.detect{|exclusion| file =~ exclusion}
       end
     end
 
@@ -64,7 +65,8 @@ namespace :i18n do
 
     desc 'Create translation records from all default locale translations if none exists.'
     task :synchronize_translations => :environment do
-      I18nUtil.synchronize_translations((ENV['SYNC_EXCLUDE'] || '').split(','))
+      exclusions = (ENV['SYNC_EXCLUDE'] || '').split(',').collect{|pattern| Regexp.new(pattern)}
+      I18nUtil.synchronize_translations(exclusions)
     end
 
     desc 'Populate default locales'
