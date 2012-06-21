@@ -152,7 +152,6 @@ class I18nUtil
 
   # Populate translation records from the default locale to other locales if no record exists.
   def self.synchronize_translations(exclusions)
-    exclusions = exclusions.collect{|pattern| Regexp.new(pattern)}
     set_current_load_source(nil)
     non_default_locales = I18n::Backend::Locale.non_defaults
     puts "CHECKING FOR MISSES - #{non_default_locales.collect{|locale| locale.code}}" if verbose?
