@@ -83,13 +83,17 @@ class I18nUtil
   def self.create_translation(locale, key, pluralization_index, value)
     if translation = locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) # find existing record by hash key
       puts "...UPDATE #{locale.code} : #{key} : #{pluralization_index}" if verbose?
+    elsif locale != (default_locale = I18n::Backend::Locale.default_locale) and not default_locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index)
+      puts "...SKIP   #{locale.code} : #{key} : #{pluralization_index}" if verbose?
     else
       translation = locale.translations.build(:key => key, :pluralization_index => pluralization_index)
       puts "...ADD    #{locale.code} : #{key} : #{pluralization_index}" if verbose?
     end
-    translation.value = value
-    translation.source = current_load_source
-    translation.save!
+    if translation
+      translation.value = value
+      translation.source = current_load_source
+      translation.save!
+    end
   end
 
   def self.extract_translations_from_hash(hash, parent_keys = [])
