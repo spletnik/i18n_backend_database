@@ -1,0 +1,16 @@
+<% translation_stats.each do |stat| %>
+    <div><%= stat[:locale].name %></div>
+    <div style="width: <%= stat[:total] + stat[:missing] %>px;">
+        <div style="background-color: red; width: <%= stat[:untranslated] %>px; float: left; cursor: pointer;" onclick="window.location = '<%= translations_url(:locale_id => stat[:locale].code,:translation_option => 'untranslated') %>'">&nbsp;</div>
+        <div style="background-color: green; width: <%= stat[:translated] %>px; float: left; cursor: pointer;" onclick="window.location = '<%= translations_url(:locale_id => stat[:locale].code,:translation_option => 'translated') %>'">&nbsp</div>
+        <div style="background-color: gray; width: <%= stat[:missing] %>px; float: left;">&nbsp</div>
+        <div style="clear: both;"></div>
+    </div>
+    <div style="width: <%= stat[:total] + stat[:missing] %>px;">
+        <div style="background-color: yellow; width: <%= stat[:unsourced] %>px; float: left; cursor: pointer;" onclick="window.location = '<%= translations_url(:locale_id => stat[:locale].code,:translation_option => 'unsourced') %>'">&nbsp</div>
+        <div style="background-color: cyan; width: <%= stat[:sourced] %>px; float: left;">&nbsp</div>
+        <div style="background-color: gray; width: <%= stat[:missing] %>px; float: left;">&nbsp</div>
+        <div style="clear: both;"></div>
+    </div>
+    <div>&nbsp;</div>
+<% end %>

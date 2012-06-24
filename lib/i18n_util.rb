@@ -83,13 +83,17 @@ class I18nUtil
   def self.create_translation(locale, key, pluralization_index, value)
     if translation = locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index) # find existing record by hash key
       puts "...UPDATE #{locale.code} : #{key} : #{pluralization_index}" if verbose?
+    elsif locale != (default_locale = I18n::Backend::Locale.default_locale) and not default_locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index)
+      puts "...SKIP   #{locale.code} : #{key} : #{pluralization_index}" if verbose?
     else
       translation = locale.translations.build(:key => key, :pluralization_index => pluralization_index)
       puts "...ADD    #{locale.code} : #{key} : #{pluralization_index}" if verbose?
     end
-    translation.value = value
-    translation.source = current_load_source
-    translation.save!
+    if translation
+      translation.value = value
+      translation.source = current_load_source
+      translation.save!
+    end
   end
 
   def self.extract_translations_from_hash(hash, parent_keys = [])
@@ -111,7 +115,9 @@ class I18nUtil
   def self.seed_application_translations(dir='app')
     last_source = nil
     translated_objects(dir).each do |match,source|
-      next unless match = [/'(.*?)'/,/"(.*?)"/,/\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length,nil]}.sort.first.last
+      # whatever the case, the parameters must start with a string, so being tricky and finding the lowest index of a match really shouldn't matter...
+      next unless match = [/^\s*'(.*?)'/,/^\s*"(.*?)"/,/^\s*\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length,nil]}.sort.first.last
+      next if match =~ /#\{/ # skip any strings that have substitution patterns
       next if I18n::Backend::Locale.default_locale.translations.find_by_key_and_pluralization_index(Translation.hk(match),1)
 
       begin
@@ -221,9 +227,9 @@ class I18nUtil
     end
   end
 
-  def self.export_translations(locale)
+  def self.export_translations(locale,suffix = '.yml')
     puts "EXPORTING - #{locale.code}" if verbose?
-    translation_path = "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}.yml"
+    translation_path = "#{DEFAULT_TRANSLATION_PATH}/#{locale.code}#{suffix}"
     source_options = ['source_id is null']
     if previous_translations_source = TranslationSource.find_by_path(translation_path)
       source_options << "source_id = #{previous_translations_source.id}"

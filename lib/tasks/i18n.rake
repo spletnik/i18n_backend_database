@@ -26,11 +26,19 @@ namespace :i18n do
     end
   end
 
-  desc 'Extracts translation data from database into fixtures'
+  desc 'Extracts non-default translation data from database'
   task :export_translations => :environment do
     locale_codes = ENV['LOCALE_CODES'] || I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
     I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale|
       I18nUtil.export_translations(locale)
+    end
+  end
+
+  desc 'Backup translation data from database for all locales'
+  task :backup_translations => :environment do
+    locale_codes = ENV['LOCALE_CODES'] || I18n::Backend::Locale.all.collect{|locale| locale.code}.join(',')
+    I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale|
+      I18nUtil.export_translations(locale,'.bak')
     end
   end
 
@@ -51,8 +59,10 @@ namespace :i18n do
     desc 'Populate the locales and translations tables from all Rails Locale YAML files. Can set LOCALE_YAML_FILES to comma separated list of files to overide'
     task :from_rails => :environment do
       exclusions = (ENV['RAILS_EXCLUDE'] || '').split(',').collect{|pattern| Regexp.new(pattern)}
-      yaml_files = (ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path).select{|path| path =~ /\.yml$/}
-      yaml_files.each do |file|
+      all_yaml_files = (ENV['LOCALE_YAML_FILES'] ? ENV['LOCALE_YAML_FILES'].split(',') : I18n.load_path).select{|path| path =~ /\.yml$/}
+      default_locale_pattern = /(#{I18n.default_locale}\.yml$)|(locale\/#{I18n.default_locale})/
+      default_yaml_files = all_yaml_files.inject([]){|matches,file| matches << file if file =~ default_locale_pattern; matches}
+      (default_yaml_files + (all_yaml_files - default_yaml_files)).each do |file|
         I18nUtil.load_from_yml file unless exclusions.detect{|exclusion| file =~ exclusion}
       end
     end

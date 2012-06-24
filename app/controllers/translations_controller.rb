@@ -3,6 +3,8 @@ class TranslationsController < ActionController::Base
   layout 'translations'
   before_filter :find_locale
 
+  helper_method :translation_stats,:check_for_missing_params
+
   ## FIXME:  you'll probably want add authorization to this controller!
 
   # GET /translations
@@ -18,8 +20,8 @@ class TranslationsController < ActionController::Base
   # GET /translations
   # GET /translations.xml
   def translations
-    @locale ||= I18n::Backend::Locale.default_locale
-    @translation_option = TranslationOption.find(params[:translation_option])
+    session[:translation_option] = params[:translation_option] if params[:translation_option]
+    @translation_option = TranslationOption.find(session[:translation_option])
     case @translation_option
       when TranslationOption.translated
         @translations = @locale.translations.translated
@@ -108,7 +110,7 @@ class TranslationsController < ActionController::Base
       if @translation.update_attributes(params[:translation])
         format.html do
           flash[:notice] = 'Translation was successfully updated.'
-          redirect_to locale_translation_path(@locale, @translation)
+          redirect_to :back
         end
         format.xml  { head :ok }
         format.js   {}
@@ -132,7 +134,35 @@ class TranslationsController < ActionController::Base
   end
 
 private
+
+  def check_for_missing_params(default_value,target_value)
+    return if (default_params = default_value.scan(/\%\{(.*?)\}/).flatten).empty?
+    return default_params if target_value.nil? or (target_params = target_value.scan(/\%\{(.*?)\}/).flatten).empty?
+    return if (missing_params = default_params - target_params).empty?
+    missing_params
+  end
+
+  def translation_stats
+    @stats ||= [].tap do |stats|
+      default_locale = I18n::Backend::Locale.default_locale
+      stats << collect_counts(default_locale)
+      I18n::Backend::Locale.non_defaults.order(:name).each{|locale| stats << collect_counts(locale)}
+      max_total = stats.collect{|stat| stat[:total]}.max
+      stats.each{|stat| stat[:missing] = max_total - stat[:total]}
+    end
+  end
+
+  def collect_counts(locale)
+    total = locale.translations.count
+    translated = locale.translations.translated.count
+    untranslated = total - translated
+    unsourced = locale.translations.unsourced.count
+    sourced = total - unsourced
+    {:locale => locale, :total => total, :translated => translated, :untranslated => untranslated, :unsourced => unsourced, :sourced => sourced}
+  end
+
   def find_locale
-    @locale = I18n::Backend::Locale.find_by_code(params[:locale_id])
+    session[:locale_id] = params[:locale_id] if params[:locale_id]
+    @locale = I18n::Backend::Locale.find_by_code(session[:locale_id]) || I18n::Backend::Locale.default_locale
   end
 end
