@@ -26,11 +26,19 @@ namespace :i18n do
     end
   end
 
-  desc 'Extracts translation data from database into fixtures'
+  desc 'Extracts non-default translation data from database'
   task :export_translations => :environment do
     locale_codes = ENV['LOCALE_CODES'] || I18n::Backend::Locale.non_defaults.collect{|locale| locale.code}.join(',')
     I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale|
       I18nUtil.export_translations(locale)
+    end
+  end
+
+  desc 'Backup translation data from database for all locales'
+  task :backup_translations => :environment do
+    locale_codes = ENV['LOCALE_CODES'] || I18n::Backend::Locale.all.collect{|locale| locale.code}.join(',')
+    I18nUtil.process_translation_locales(locale_codes.split(',')) do |locale|
+      I18nUtil.export_translations(locale,'.bak')
     end
   end
 
