@@ -21,6 +21,7 @@ class TranslationsController < ActionController::Base
   # GET /translations.xml
   def translations
     session[:translation_option] = params[:translation_option] if params[:translation_option]
+    session[:show_keys] = params[:show_keys] if params[:show_keys]
     @translation_option = TranslationOption.find(session[:translation_option])
     case @translation_option
       when TranslationOption.translated
