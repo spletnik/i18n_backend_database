@@ -147,6 +147,8 @@ class I18nUtil
             begin
               assets += line.scan(/(I18n\.t|\Wt)(\(|\s*)'([^']*)'/).collect{|pair| [pair.last,current_load_source(false)]}
               assets += line.scan(/(I18n\.t|\Wt)(\(|\s*)"([^"]*)"/).collect{|pair| [pair.last,current_load_source(false)]}
+              assets += line.scan(/(I18n\.t|\Wt)(\(|\s*)%\(([^\)]*)\)"/).collect{|pair| [pair.last,current_load_source(false)]}
+              assets += line.scan(/(I18n\.t|\Wt)(\(|\s*)%\[([^\]]*)\]"/).collect{|pair| [pair.last,current_load_source(false)]}
             rescue
               puts "WARNING:#{$!} in file #{item} with line '#{line}'"
             end
