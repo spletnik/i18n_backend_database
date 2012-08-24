@@ -135,12 +135,13 @@ class I18nUtil
     end
   end
 
-  def self.translated_objects(dir='app')
+  def self.translated_objects(dir=nil)
     assets = []
+    dir ||= 'app'
     Dir.glob("#{dir}/*").each do |item|
       if File.directory?(item)
         assets += translated_objects(item) unless item.ends_with?('i18n_backend_database') # ignore self
-      elsif item.ends_with?('.rb') || item.ends_with?('.js') || item.ends_with?('.erb')
+      elsif item.ends_with?('.rb') || item.ends_with?('.erb') || item.ends_with?('.rhtml') # TODO what about things like HAML?
         set_current_load_source(item) do
           File.readlines(item).each_with_index do |line,index|
             begin
