@@ -69,8 +69,7 @@ namespace :i18n do
 
     desc 'Populate the translation tables from translation calls within the application. This only works on basic text translations. Can set DIR to override starting directory.'
     task :from_application => :environment do
-      dir = ENV['DIR'] ? ENV['DIR'] : "."
-      I18nUtil.seed_application_translations(dir)
+      I18nUtil.seed_application_translations(ENV['DIR'])
     end
 
     desc 'Create translation records from all default locale translations if none exists.'
