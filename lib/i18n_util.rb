@@ -115,9 +115,10 @@ class I18nUtil
   def self.seed_application_translations(dir='app')
     last_source = nil
     translated_objects(dir).each do |match,source|
-      # whatever the case, the parameters must start with a string, so being tricky and finding the lowest index of a match really shouldn't matter...
-      next unless match = [/^\s*'(.*?)'/,/^\s*"(.*?)"/,/^\s*\%\((.*?)\)/].collect{|pattern| match =~ pattern ? [match.index($1),$1] : [match.length,nil]}.sort.first.last
-      next if match =~ /#\{/ # skip any strings that have substitution patterns
+      if match =~ /#\{/ # skip any strings that have substitution patterns
+        puts "WARNING: MATCH:#{match} -- CONTAINS A RUBY SUBSTITUTION IN #{source.path}"
+        next
+      end
       next if I18n::Backend::Locale.default_locale.translations.find_by_key_and_pluralization_index(Translation.hk(match),1)
 
       begin
@@ -128,7 +129,7 @@ class I18nUtil
         set_current_load_source((last_source = source).full_path.to_s)
         I18n.t(match, options) # default locale first
       rescue
-        puts "WARNING:#{$!} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments}"
+        puts "WARNING:#{$!} MATCH:#{match} OPTIONS:#{options} ARGS:#{interpolation_arguments} IN #{source.path}"
       end
 
     end
@@ -143,9 +144,8 @@ class I18nUtil
         set_current_load_source(item) do
           File.readlines(item).each_with_index do |line,index|
             begin
-              assets += line.scan(/(I18n\.t|\Wt)\s*\((.*?)\)/).collect{|pair| [pair.last,current_load_source(false)]}
-              assets += line.scan(/(I18n\.t|\Wt)\s*'(.*?)'/).collect{|pair| [pair.last,current_load_source(false)]}
-              assets += line.scan(/(I18n\.t|\Wt)\s*"(.*?)"/).collect{|pair| [pair.last,current_load_source(false)]}
+              assets += line.scan(/(I18n\.t|\Wt)(\(|\s*)'([^']*)'/).collect{|pair| [pair.last,current_load_source(false)]}
+              assets += line.scan(/(I18n\.t|\Wt)(\(|\s*)"([^"]*)"/).collect{|pair| [pair.last,current_load_source(false)]}
             rescue
               puts "WARNING:#{$!} in file #{item} with line '#{line}'"
             end
