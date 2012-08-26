@@ -8,7 +8,7 @@
   <%= submit_tag 'Go' %>
 <% end %>
 
-<p>Textual Translation progress: <strong><%= @locale.percentage_translated %>%</strong></p>
+<p>Textual Translation progress: <strong><%= @locale.percentage_translated %>%</strong> <%= link_to 'Export to CSV',translations_url(:locale_id => @locale.code,:translation_option => @translation_option.code,:export => 'csv') %></p>
 
 <h2><%= @translation_option.description %>: <%= @locale.name %></h2>
 

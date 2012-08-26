@@ -31,9 +31,25 @@ class TranslationsController < ActionController::Base
       else
         @translations = @locale.translations.untranslated
     end
-    respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @translations }
+    if params[:export] == 'csv'
+      csv_string = CSV.generate do |csv|
+        csv << ['Original','Translation','Plural','Key']
+        @translations.each do |translation|
+          next unless default_value = translation.default_locale_value
+          line = []
+          line << default_value
+          line << translation.value
+          line << translation.pluralization_index
+          line << translation.raw_key if translation.raw_key != default_value
+          csv << line
+        end
+      end
+      send_data csv_string, :type => 'text/plain', :filename=>"#{@locale.code}_#{@translation_option ? @translation_option.code : 'untranslated'}_#{Time.now.strftime('%Y%m%d%H%M%S')}.csv", :disposition => 'attachment'
+    else
+      respond_to do |format|
+        format.html # index.html.erb
+        format.xml  { render :xml => @translations }
+      end
     end
   end
 
