@@ -1,5 +1,5 @@
 <% form_tag asset_translations_url do -%>
-<%= select_tag :locale_id,    options_from_collection_for_select(Locale.all, :code, :name, @locale.code) -%>
+<%= select_tag :locale_id,    options_from_collection_for_select(I18n::Backend::Locale.all, :code, :name, @locale.code) -%>
 <%= select_tag :translation_option, options_from_collection_for_select(TranslationOption.all, :code, :description, @translation_option.code) -%>
 <%= submit_tag 'Go' %>
 <% end -%>
