@@ -79,8 +79,7 @@ module I18n::Backend
         # Only taking those translations that in which the beggining of the raw_key is EXACTLY like the given case. This means it's not case sensitive.
         # This allows to use Number as a normal key and number.whatever.whatever.. as the scoped key.
         children = @locale.translations.where(["raw_key like ?", "#{escaped_key}.%"]).select{|child| child.raw_key.starts_with?(key.to_s)}
-        if children.size > 0
-          entry = hashify_record_array(key.to_s, children)
+        if children.size > 0 and (entry = hashify_record_array(key.to_s, children))
           @cache_store.write(Translation.ck(@locale, key), entry) unless cache_lookup == true
           return entry
         end
@@ -272,7 +271,8 @@ module I18n::Backend
         # If we contain a period delimiter, we need to add a sub-hash.
         # Otherwise, we just insert the value at this level.
         if key.index(".")
-          internal_node = key.slice(0, key.index('.'))
+          next if (internal_node = key.slice(0, key.index('.'))).blank?
+
           new_root = root_key + '.' + internal_node
           new_record_array = record_array.select {|record| record.raw_key.starts_with? new_root}
           result[internal_node.to_sym] = hashify_record_array(new_root, new_record_array)
@@ -282,7 +282,7 @@ module I18n::Backend
           result[key.to_sym] = value
         end
       end
-      result
+      result unless result.empty?
     end
   end
 end
