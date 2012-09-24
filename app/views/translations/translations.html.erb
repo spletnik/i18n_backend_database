@@ -19,10 +19,10 @@
 <% for translation in @translations %>
   <div id="<%= "translation_#{translation.class}_#{translation.id}" %>">
   <%= form_for(translation, :as => :translation, :url => locale_translation_path(@locale, translation), :remote => true) do |f| %>
-      <% if session[:show_keys] == 'on' and translation.raw_key != translation.default_locale_value %>
+      <% if session[:show_keys] == 'on' and translation.raw_key != translation.default_locale_value(nil) %>
         <p style="font-style: italic; font-weight: bold;"><%= translation.raw_key %>:</p>
       <% end %>
-      <p><%= default_value = translation.default_locale_value || translation.raw_key %></p>
+      <p><%= default_value = translation.default_locale_value(translation.raw_key) %></p>
       <% if missing_params = check_for_missing_params(default_value,translation.value) %>
           <% if translation.value.blank? %>
             <p style="background-color: gold; font-weight: bold;">
