@@ -229,11 +229,6 @@ module I18n::Backend
 
       string = string.dup # It returns an error if not duplicated
 
-      if string.respond_to?(:force_encoding)
-        original_encoding = string.encoding
-        string.force_encoding(Encoding::BINARY)
-      end
-
       result = string.gsub(MATCH) do
         escaped, pattern, key = $1, $2, $2.to_sym
         if escaped
@@ -247,7 +242,6 @@ module I18n::Backend
         end
       end
 
-      result.force_encoding(original_encoding) if original_encoding
       result
     end
 
