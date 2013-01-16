@@ -243,7 +243,7 @@ module I18n::Backend
         elsif !values.include?(key)
           raise MissingInterpolationArgument.new(pattern, string)
         else
-          values[key].to_s
+          values[key].to_s.force_encoding(Encoding::BINARY)
         end
       end
 
