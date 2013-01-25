@@ -228,11 +228,7 @@ module I18n::Backend
       return string unless string.is_a?(String)
 
       string = string.dup # It returns an error if not duplicated
-
-      if string.respond_to?(:force_encoding)
-        original_encoding = string.encoding
-        string.force_encoding(Encoding::BINARY)
-      end
+      original_encoding = string.encoding
 
       result = string.gsub(MATCH) do
         escaped, pattern, key = $1, $2, $2.to_sym
@@ -243,11 +239,10 @@ module I18n::Backend
         elsif !values.include?(key)
           raise MissingInterpolationArgument.new(pattern, string)
         else
-          values[key].to_s.force_encoding(Encoding::BINARY)
+          values[key].to_s.force_encoding(original_encoding)
         end
       end
 
-      result.force_encoding(original_encoding) if original_encoding
       result
     end
 
