@@ -7,6 +7,8 @@ class Translation < ActiveRecord::Base
  # validates_uniqueness_of :raw_key, :scope => [:locale_id, :pluralization_index]
   after_update :update_cache
 
+  after_create :log_creation
+
   scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
   scope :unsourced, :conditions => {:source_id => nil}, :order => :raw_key
   scope :translated, :conditions => 'value IS NOT NULL', :order => :raw_key
@@ -17,6 +19,10 @@ class Translation < ActiveRecord::Base
     rescue
       rescue_value
     end
+  end
+
+  def log_creation
+    puts "Created #{locale_id} #{pluralization_index} #{raw_key}: #{id}"
   end
 
   def value_or_default
