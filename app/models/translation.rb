@@ -4,7 +4,7 @@ class Translation < ActiveRecord::Base
   belongs_to :source, :class_name => 'TranslationSource'
   validates_presence_of :key
   before_validation :generate_hash_key, :on => :create
-  validates_uniqueness_of :raw_key, :scope => [:locale_id, :pluralization_index]
+ # validates_uniqueness_of :raw_key, :scope => [:locale_id, :pluralization_index]
   after_update :update_cache
 
   scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
