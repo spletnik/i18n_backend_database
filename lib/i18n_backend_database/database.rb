@@ -97,7 +97,7 @@ module I18n::Backend
         unless translation
           first_string_default = Array(options[:default]).detect{|option| option.is_a?(String)}
           translation = @locale.create_translation(key, first_string_default || key, pluralization_index)
-          raise "Creating translation"
+          #raise "Creating translation"
         end
         entry = translation.value_or_default
       end
