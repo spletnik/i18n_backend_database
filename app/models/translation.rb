@@ -4,10 +4,7 @@ class Translation < ActiveRecord::Base
   belongs_to :source, :class_name => 'TranslationSource'
   validates_presence_of :key
   before_validation :generate_hash_key, :on => :create
- # validates_uniqueness_of :raw_key, :scope => [:locale_id, :pluralization_index]
   after_update :update_cache
-
-  after_create :log_creation
 
   scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
   scope :unsourced, :conditions => {:source_id => nil}, :order => :raw_key
@@ -19,10 +16,6 @@ class Translation < ActiveRecord::Base
     rescue
       rescue_value
     end
-  end
-
-  def log_creation
-    puts "Created #{locale_id} #{pluralization_index} #{raw_key}: #{id}"
   end
 
   def value_or_default
