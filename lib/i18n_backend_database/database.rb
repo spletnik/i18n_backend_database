@@ -203,9 +203,11 @@ module I18n::Backend
       if default_locale_entry.is_a?(Array)
         default_locale_entry.each_with_index do |entry, index|
           locale.create_translation(key, nil, index) if entry
+          raise "Creating translation" if(defined? Rails::Server)
         end
       else
         locale.create_translation(key, nil)
+        raise "Creating translation" if(defined? Rails::Server)
       end
 
       return default_locale_entry
