@@ -111,7 +111,7 @@ module I18n::Backend
         rescue
 
           logger = Logger.new(STDOUT)
-          logger.error($!)
+          logger.error("TRANSLATION LOCK ERROR: #{$!}")
 
         ensure
           fh.flock(File::LOCK_UN)
