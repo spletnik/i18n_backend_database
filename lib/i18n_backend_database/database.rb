@@ -108,19 +108,11 @@ module I18n::Backend
             first_string_default = Array(options[:default]).detect{|option| option.is_a?(String)}
             translation = @locale.create_translation(key, first_string_default || key, pluralization_index)
           end
-        rescue
-
-          logger = Logger.new(STDOUT)
-          logger.error("TRANSLATION LOCK ERROR: #{$!}")
-
         ensure
           fh.flock(File::LOCK_UN)
         end
 
         File.delete(lockfile)
-
-        # in case lock failed, grab the one created by the other process
-        translation = @locale.translations.find_by_key_and_pluralization_index(hk, pluralization_index) if(translation.nil?)
 
         entry = translation.value_or_default
       end
