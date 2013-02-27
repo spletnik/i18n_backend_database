@@ -95,7 +95,8 @@ module I18n::Backend
         hk = Translation.hk(key)
 
         # use a file lock to ensure mutex
-        fh = File.new(Rails.root.join('tmp', "#{@locale.id}_#{hk}_#{pluralization_index}.lock"), "a+")
+        lockfile = Rails.root.join('tmp', "#{@locale.id}_#{hk}_#{pluralization_index}.lock")
+        fh = File.new(lockfile, "a+")
 
         begin
           fh.flock(File::LOCK_EX)
@@ -110,6 +111,8 @@ module I18n::Backend
         ensure
           fh.flock(File::LOCK_UN)
         end
+
+        File.delete(lockfile)
 
         # in case lock failed, grab the one created by the other process
         translation = @locale.translations.find_by_key_and_pluralization_index(hk, pluralization_index) if(translation.nil?)
