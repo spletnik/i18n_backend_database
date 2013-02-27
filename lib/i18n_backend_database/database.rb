@@ -108,6 +108,11 @@ module I18n::Backend
             first_string_default = Array(options[:default]).detect{|option| option.is_a?(String)}
             translation = @locale.create_translation(key, first_string_default || key, pluralization_index)
           end
+        rescue
+
+          logger = Logger.new(STDOUT)
+          logger.error($!)
+
         ensure
           fh.flock(File::LOCK_UN)
         end
