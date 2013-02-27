@@ -91,14 +91,29 @@ module I18n::Backend
         pluralization_index = (options[:count].nil? || options[:count] == 1) ? 1 : 0
         key = key.to_s
         key.gsub!('.one', '') if key.ends_with?('.one')
-        if (translation = @locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index)) and not translation.raw_key.starts_with?(key.to_s)
-          translation = nil
+
+        hk = Translation.hk(key)
+
+        # use a file lock to ensure mutex
+        fh = File.new(Rails.root.join('tmp', "#{@locale.id}_#{hk}_#{pluralization_index}.lock"))
+
+        begin
+          fh.flock(File::LOCK_EX)
+
+          if (translation = @locale.translations.find_by_key_and_pluralization_index(hk, pluralization_index)) and not translation.raw_key.starts_with?(key.to_s)
+            translation = nil
+          end
+          unless translation
+            first_string_default = Array(options[:default]).detect{|option| option.is_a?(String)}
+            translation = @locale.create_translation(key, first_string_default || key, pluralization_index)
+          end
+        ensure
+          fh.flock(File::LOCK_UN)
         end
-        unless translation
-          first_string_default = Array(options[:default]).detect{|option| option.is_a?(String)}
-          translation = @locale.create_translation(key, first_string_default || key, pluralization_index)
-          raise "Creating translation" if(defined? Rails::Server)
-        end
+
+        # in case lock failed, grab the one created by the other process
+        translation = @locale.translations.find_by_key_and_pluralization_index(hk, pluralization_index) if(translation.nil?)
+
         entry = translation.value_or_default
       end
 
