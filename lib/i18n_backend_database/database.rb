@@ -94,7 +94,9 @@ module I18n::Backend
 
         hk = Translation.hk(key)
 
-        # use a file lock to ensure mutex
+        # use a file lock to ensure synchronization
+        # could use Mutex class here but no need to block ALL other requests,
+        # just those for the same translation
         lockfile = Rails.root.join('tmp', "#{@locale.id}_#{hk}_#{pluralization_index}.lock")
         fh = File.new(lockfile, "a+")
 
