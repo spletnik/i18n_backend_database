@@ -114,7 +114,11 @@ module I18n::Backend
           fh.flock(File::LOCK_UN)
         end
 
-        File.delete(lockfile)
+        begin
+          File.delete(lockfile)
+        rescue
+
+        end
 
         entry = translation.value_or_default
       end
