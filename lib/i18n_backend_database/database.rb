@@ -190,7 +190,7 @@ module I18n::Backend
     def locale_in_context(locale)
       return @locale if @locale && @locale.code == locale.to_s
       return @locale unless locale.class == String || locale.class == Symbol
-      @locale I18n::Backend::Locale.where(code: locale.to_s).first_or_create
+      @locale = I18n::Backend::Locale.where(code: locale.to_s).first_or_create
       raise I18n::InvalidLocale.new(locale) unless @locale
     end
 
