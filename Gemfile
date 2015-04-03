@@ -1,4 +1,4 @@
-source "http://rubygems.org"
-gemspec
+source 'https://rubygems.org'
 
-#gem 'rails','4.2.1'
+# Specify your gem's dependencies in i18n_backend_database.gemspec
+gemspec

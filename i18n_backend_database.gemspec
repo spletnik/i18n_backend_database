@@ -1,23 +1,25 @@
-$:.push File.expand_path('../lib', __FILE__)
-
-# Maintain your gem's version:
+# coding: utf-8
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'i18n_backend_database/version'
 
-# Describe your gem and declare its dependencies:
-Gem::Specification.new do |s|
-  s.name        = 'i18n_backend_database'
-  s.version     = I18nBackendDatabase::VERSION
-  s.authors     = ['Dylan Stamat']
-  s.email       = ['dstamat@elctech.com']
-  s.homepage    = 'http://someplace.com'
-  s.summary     = 'summary.'
-  s.description = 'description.'
+Gem::Specification.new do |spec|
+  spec.name          = "i18n_backend_database"
+  spec.version       = I18nBackendDatabase::VERSION
+  spec.authors       = ["Vladan Markovic"]
+  spec.email         = ["vladanm@gmail.com"]
+  spec.summary       = %q{Write a short summary. Required.}
+  spec.description   = %q{Write a longer description. Optional.}
+  #spec.description   = %q{Internationalize numbers adding normalization, validation and modifying the number field to restor the value to its original if validation fails}
+  #spec.summary       = gem.description
+  spec.homepage      = ""
+  spec.license       = "MIT"
 
-  s.files = Dir['{app,config,db,lib}/**/*'] + ['LICENSE', 'Rakefile', 'README.textile']
-  s.test_files = Dir['test/**/*']
+  spec.files         = `git ls-files -z`.split("\x0")
+  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
+  spec.require_paths = ["lib"]
 
-  s.add_dependency("railties", ">= 3.2.6", "< 5")
-  s.add_development_dependency 'rspec', '>= 2.0.0'
-  s.add_development_dependency 'rspec-rails', '>= 2.0.0'
-  s.add_development_dependency 'sqlite3', '>= 1.3.4'
+  spec.add_development_dependency "bundler", "~> 1.7"
+  spec.add_development_dependency "rake", "~> 10.0"
 end
