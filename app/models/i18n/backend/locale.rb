@@ -4,7 +4,7 @@ module I18n::Backend
     validates_uniqueness_of :code
 
     has_many :translations, :dependent => :destroy
-    scope :non_defaults, :conditions => ["code != ?", I18n.default_locale.to_s]
+    scope :non_defaults, -> { where("code != ?", I18n.default_locale.to_s) }
 
     # scope :english, lambda { |m| { return Hash.new if m.nil?; :conditions => "locales.locale = '#{m}'" } }
     # scope :in_city, lambda { |m| { return {} if m.nil?; :joins => [cities], :conditions => "cities.name = '#{m}' } }

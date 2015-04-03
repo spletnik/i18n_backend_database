@@ -6,9 +6,9 @@ class Translation < ActiveRecord::Base
   before_validation :generate_hash_key, :on => :create
   after_update :update_cache
 
-  scope :untranslated, :conditions => {:value => nil}, :order => :raw_key
-  scope :unsourced, :conditions => {:source_id => nil}, :order => :raw_key
-  scope :translated, :conditions => 'value IS NOT NULL', :order => :raw_key
+  scope :untranslated, -> { where(:value => nil).order(:raw_key) }
+  scope :unsourced, -> { where(:source_id => nil).order(:raw_key) }
+  scope :translated, -> { where('value IS NOT NULL').order(:raw_key) }
 
   def default_locale_value(rescue_value = 'No default locale value')
     begin

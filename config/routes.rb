@@ -3,7 +3,9 @@ Rails.application.routes.draw do
     resources :locales do
       resources :translations
     end
-    match '/translations' => 'translations#translations', :as => 'translations'
-    match '/asset_translations' => 'translations#asset_translations', :as => 'asset_translations'
+    resources :translations
+    resources :asset_translations
+    #get '/translations' => 'translations#translations', :as => 'translations'
+    #get '/asset_translations' => 'translations#asset_translations', :as => 'asset_translations'
   end
 end
