@@ -1,5 +1,5 @@
 Dir[File.dirname(__FILE__) + '/../app/**/*.rb'].each{|file| require file}
-require 'activerecord_reset_subclass_fix'
+require File.dirname(__FILE__) + 'activerecord_reset_subclass_fix'
 require File.dirname(__FILE__) + '/i18n_backend_database/database'
 require File.dirname(__FILE__) + '/ext/i18n'
 require File.dirname(__FILE__) + '/i18n_util'
