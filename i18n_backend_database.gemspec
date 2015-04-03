@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.files = Dir['{app,config,db,lib}/**/*'] + ['LICENSE', 'Rakefile', 'README.textile']
   s.test_files = Dir['test/**/*']
 
-  s.add_dependency 'rails', '>= 3'
+  s.add_dependency("railties", ">= 3.2.6", "< 5")
   s.add_development_dependency 'rspec', '>= 2.0.0'
   s.add_development_dependency 'rspec-rails', '>= 2.0.0'
   s.add_development_dependency 'sqlite3', '>= 1.3.4'
