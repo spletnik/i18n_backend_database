@@ -91,7 +91,7 @@ module I18n::Backend
         pluralization_index = (options[:count].nil? || options[:count] == 1) ? 1 : 0
         key = key.to_s
         key.gsub!('.one', '') if key.ends_with?('.one')
-        if (translation = @locale.translations.find_by_key_and_pluralization_index(Translation.hk(key), pluralization_index)) and not translation.raw_key.starts_with?(key.to_s)
+        if (translation = @locale.translations.where("key = ? AND pluralization_index = ?" , Translation.hk(key), pluralization_index).last and not translation.raw_key.starts_with?(key.to_s)
           translation = nil
         end
         unless translation
