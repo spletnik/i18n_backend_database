@@ -167,7 +167,7 @@ module I18n::Backend
       if @cache_store.exist?(cache_key) && value = @cache_store.read(cache_key)
         return value
       else
-        translations = locale.translations.where("key = ?", Translation.hk(key)).select{|translation| translation.raw_key.starts_with?(key.to_s)}
+        translations = locale.translations.where("translations.key = ?", Translation.hk(key)).select{|translation| translation.raw_key.starts_with?(key.to_s)}
         case translations.size
         when 0
           value = nil
