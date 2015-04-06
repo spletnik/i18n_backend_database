@@ -37,7 +37,7 @@ module I18n::Backend
       puts "...NEW #{self.code} : #{key} : #{pluralization_index}" if I18nUtil.verbose?
 
       # hackity hack.  bug #922 maybe?
-      self.connection.commit_db_transaction unless Rails.env.test?
+      #self.connection.commit_db_transaction unless Rails.env.test?
       translation
     end
 
