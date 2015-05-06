@@ -1,4 +1,4 @@
-h1. A Database Backend For Rails I18N (Now for rails 3!)
+h1. A Database Backend For Rails I18N (Now for rails 4!)
 
 Stores your translations in the database, rather than yaml files. As you tag items with t() throughout your code base, all untranslated items are marked and added to the database. An admin panel is provided so translators can quickly translate untranslated text. All lookups occur in a cache store of your choice prior to hitting the database.
 
